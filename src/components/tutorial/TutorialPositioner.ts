@@ -42,10 +42,10 @@ export const calculatePosition = (
       break;
   }
   
-  // Ensure tooltip stays within viewport bounds
+  // Enhanced viewport constraints - ensure tooltip stays within bounds
   // Check if tooltip would go off the right side of the window
   if (left + tooltipWidth > windowWidth - padding) {
-    left = windowWidth - tooltipWidth - padding;
+    left = Math.max(padding, windowWidth - tooltipWidth - padding);
   }
   
   // Check if tooltip would go off the left side of the window
@@ -61,7 +61,7 @@ export const calculatePosition = (
       top = topAbove;
     } else {
       // If above doesn't work either, place it where it fits best
-      top = windowHeight + scrollTop - tooltipHeight - padding;
+      top = Math.max(scrollTop + padding, windowHeight + scrollTop - tooltipHeight - padding);
     }
   }
   

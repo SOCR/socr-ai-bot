@@ -25,7 +25,20 @@ const TutorialHighlight: React.FC<TutorialHighlightProps> = ({ targetElement }) 
     // Apply highlight effect
     highlightElement(targetElement);
     
-    return cleanupHighlight;
+    // Add scroll event listener to reposition highlights if user scrolls
+    const handleScroll = () => {
+      cleanupHighlight();
+      highlightElement(targetElement);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('resize', handleScroll);
+    
+    return () => {
+      cleanupHighlight();
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleScroll);
+    };
   }, [targetElement]);
   
   const highlightElement = (targetElement: Element) => {
@@ -37,13 +50,12 @@ const TutorialHighlight: React.FC<TutorialHighlightProps> = ({ targetElement }) 
     // but avoid changing the original layout
     targetElement.setAttribute(
       'style', 
-      `${originalStyles}; position: relative; z-index: 1000;`
+      `${originalStyles}; position: relative; z-index: 1000; outline: none;`
     );
     
     const rect = targetElement.getBoundingClientRect();
     
     // Create a spotlight effect with masks
-    // Top mask
     const createMask = (top: number, left: number, width: number, height: number, className: string) => {
       const mask = document.createElement('div');
       mask.className = className;
@@ -52,9 +64,10 @@ const TutorialHighlight: React.FC<TutorialHighlightProps> = ({ targetElement }) 
       mask.style.left = `${left}px`;
       mask.style.width = `${width}px`;
       mask.style.height = `${height}px`;
-      mask.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+      mask.style.backgroundColor = 'rgba(0, 0, 0, 0.6)'; // Darker background for better contrast
       mask.style.zIndex = '998';
       mask.style.pointerEvents = 'none';
+      mask.style.transition = 'all 0.3s ease';
       document.body.appendChild(mask);
     };
     
@@ -90,7 +103,7 @@ const TutorialHighlight: React.FC<TutorialHighlightProps> = ({ targetElement }) 
     style.textContent = `
       @keyframes pulse {
         0% { box-shadow: 0 0 0 0 rgba(35, 134, 200, 0.8); }
-        70% { box-shadow: 0 0 0 8px rgba(35, 134, 200, 0.0); }
+        70% { box-shadow: 0 0 0 10px rgba(35, 134, 200, 0.0); }
         100% { box-shadow: 0 0 0 0 rgba(35, 134, 200, 0.0); }
       }
     `;

@@ -36,6 +36,8 @@ const Tutorial: React.FC<TutorialProps> = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [showJumpMenu, setShowJumpMenu] = useState(false);
   const [showAllTutorials, setShowAllTutorials] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
+  const maxAttempts = 20; // Maximum number of attempts to find an element
   
   // Group steps by tab for the section menu
   const getTabSections = () => {
@@ -73,6 +75,7 @@ const Tutorial: React.FC<TutorialProps> = ({
         onTabChange(nextStep.tabId);
       }
       setCurrentStep(currentStep + 1);
+      setAttemptCount(0); // Reset attempt counter for new step
     } else {
       handleClose();
     }
@@ -86,6 +89,7 @@ const Tutorial: React.FC<TutorialProps> = ({
         onTabChange(prevStep.tabId);
       }
       setCurrentStep(currentStep - 1);
+      setAttemptCount(0); // Reset attempt counter for new step
     }
   };
 
@@ -118,53 +122,74 @@ const Tutorial: React.FC<TutorialProps> = ({
         // Small delay to allow tab change before continuing
         setTimeout(() => {
           setCurrentStep(sectionIndex);
-        }, 300);
+          setAttemptCount(0); // Reset attempt counter for new step
+        }, 500); // Increased delay for tab switching
       } else {
         setCurrentStep(sectionIndex);
+        setAttemptCount(0); // Reset attempt counter for new step
       }
     }
   };
-
-  useEffect(() => {
-    if (isOpen && steps[currentStep]) {
-      // Slight delay to ensure tab switching is complete
-      const timer = setTimeout(() => {
-        const targetElement = document.querySelector(steps[currentStep].target);
-        if (targetElement) {
-          // Store the current highlighted element to clean up later
-          setHighlightedElement(targetElement);
-          
-          // Calculate tooltip position
-          const pos = calculatePosition(
-            targetElement, 
-            steps[currentStep].position, 
-            tooltipSize
-          );
-          setPosition(pos);
-          
-          // Scroll target into view with smooth behavior
-          targetElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-          });
-          
-          // Update tooltip size from ref
-          if (tooltipRef.current) {
-            const tooltipRect = tooltipRef.current.getBoundingClientRect();
-            setTooltipSize({ 
-              width: tooltipRect.width, 
-              height: tooltipRect.height 
-            });
-          }
-        }
-      }, 300); // Delay to ensure tab switching is complete
+  
+  // Function to find and highlight the target element with retries
+  const findAndHighlightTarget = () => {
+    if (!isOpen || !steps[currentStep]) return;
+    
+    const targetSelector = steps[currentStep].target;
+    const targetElement = document.querySelector(targetSelector);
+    
+    if (targetElement) {
+      // Element found - clean up previous highlight and highlight the new element
+      cleanupHighlight();
+      setHighlightedElement(targetElement);
       
-      return () => {
-        clearTimeout(timer);
-        cleanupHighlight();
-      };
+      // Calculate tooltip position
+      const pos = calculatePosition(
+        targetElement, 
+        steps[currentStep].position, 
+        tooltipSize
+      );
+      setPosition(pos);
+      
+      // Scroll target into view with smooth behavior
+      targetElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+      
+      // Update tooltip size from ref
+      if (tooltipRef.current) {
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
+        setTooltipSize({ 
+          width: tooltipRect.width, 
+          height: tooltipRect.height 
+        });
+      }
+      
+      // Reset attempt counter on success
+      setAttemptCount(0);
+    } else if (attemptCount < maxAttempts) {
+      // Element not found yet - retry with incrementing delay
+      const delay = Math.min(100 + attemptCount * 50, 1000); // Gradually increase delay up to 1s
+      
+      setTimeout(() => {
+        setAttemptCount(prev => prev + 1);
+      }, delay);
     }
-  }, [currentStep, isOpen, steps, currentTab]);
+  };
+
+  // Effect for tab switching and element highlighting
+  useEffect(() => {
+    if (isOpen && steps[currentStep] && attemptCount < maxAttempts) {
+      const tabDelay = steps[currentStep].tabId !== currentTab ? 500 : 100;
+      
+      const timer = setTimeout(() => {
+        findAndHighlightTarget();
+      }, tabDelay);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, isOpen, steps, currentTab, attemptCount]);
 
   // Update position when tooltip size changes
   useEffect(() => {
@@ -177,6 +202,23 @@ const Tutorial: React.FC<TutorialProps> = ({
       setPosition(pos);
     }
   }, [tooltipSize, highlightedElement, currentStep, steps]);
+
+  // Listen for window resize to reposition tooltip
+  useEffect(() => {
+    const handleResize = () => {
+      if (highlightedElement && steps[currentStep]) {
+        const pos = calculatePosition(
+          highlightedElement, 
+          steps[currentStep].position, 
+          tooltipSize
+        );
+        setPosition(pos);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [highlightedElement, currentStep, steps, tooltipSize]);
 
   if (!isOpen) {
     return (

@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { X, ArrowRight, ArrowLeft, Menu } from 'lucide-react';
@@ -48,6 +47,21 @@ const TutorialTooltip: React.FC<TutorialTooltipProps> = ({
   showJumpMenu,
   setShowJumpMenu
 }) => {
+  // Keep track of dropdown position to prevent it from going offscreen
+  const [dropdownPosition, setDropdownPosition] = useState<"bottom" | "top" | "left" | "right">("bottom");
+  
+  // Check visible space and adjust dropdown position
+  useEffect(() => {
+    const spaceAbove = position.top;
+    const spaceBelow = window.innerHeight - position.top;
+    
+    if (spaceBelow < 300 && spaceAbove > 300) {
+      setDropdownPosition("top");
+    } else {
+      setDropdownPosition("bottom");
+    }
+  }, [position]);
+
   return (
     <Card
       className={cn(
@@ -89,8 +103,11 @@ const TutorialTooltip: React.FC<TutorialTooltipProps> = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent 
             align="start" 
+            side={dropdownPosition}
             className="w-[250px] max-h-[300px] overflow-y-auto z-[1002]" 
             sideOffset={5}
+            avoidCollisions={true}
+            collisionPadding={10}
           >
             {sections.map((section) => (
               <DropdownMenuItem 
