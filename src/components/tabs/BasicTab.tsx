@@ -10,8 +10,8 @@ import FeedbackForm from '../FeedbackForm';
 import Accordion from '../Accordion';
 import AccordionItem from '../AccordionItem';
 import apiService from '@/lib/apiService';
-import { demoDatasets, demoQuestions } from '@/lib/demoData';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { demoQuestions } from '@/lib/demoData';
+import DatasetSelector from '../DatasetSelector';
 
 interface BasicTabProps {
   onOpenSettings: () => void;
@@ -121,18 +121,7 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
               
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-2">
-                  <Select onValueChange={handleDatasetSelect}>
-                    <SelectTrigger className="w-full dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600">
-                      <SelectValue placeholder="Select a demo dataset" />
-                    </SelectTrigger>
-                    <SelectContent className="dark:bg-gray-800 dark:text-gray-200">
-                      {demoDatasets.map((dataset) => (
-                        <SelectItem key={dataset.value} value={dataset.value}>
-                          {dataset.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <DatasetSelector onSelect={handleDatasetSelect} />
                   
                   <p className="text-sm text-center dark:text-gray-400">or</p>
                   

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
 
-interface Step {
+export interface Step {
   target: string;
   title: string;
   content: string;
@@ -29,23 +29,38 @@ const Tutorial: React.FC<TutorialProps> = ({ steps, onComplete }) => {
     
     let top = rect.top + scrollTop;
     let left = rect.left + scrollLeft;
+    const tooltipWidth = 300;
+    const tooltipHeight = 150;
+    const windowWidth = window.innerWidth;
     
     switch (position) {
       case 'top':
-        top -= 10 + 150; // Tooltip height + offset
-        left += rect.width / 2 - 150; // Center horizontally
+        top -= tooltipHeight + 10; // Tooltip height + offset
+        left += rect.width / 2 - tooltipWidth / 2; // Center horizontally
+        // Ensure tooltip stays within viewport horizontally
+        left = Math.max(10, Math.min(left, window.innerWidth - tooltipWidth - 10));
         break;
       case 'right':
         left += rect.width + 10;
-        top += rect.height / 2 - 75; // Center vertically
+        top += rect.height / 2 - tooltipHeight / 2; // Center vertically
+        // If tooltip would go off-screen to the right, place it on the left instead
+        if (left + tooltipWidth > windowWidth) {
+          left = rect.left - tooltipWidth - 10;
+        }
         break;
       case 'bottom':
         top += rect.height + 10;
-        left += rect.width / 2 - 150; // Center horizontally
+        left += rect.width / 2 - tooltipWidth / 2; // Center horizontally
+        // Ensure tooltip stays within viewport horizontally
+        left = Math.max(10, Math.min(left, window.innerWidth - tooltipWidth - 10));
         break;
       case 'left':
-        left -= 10 + 300; // Tooltip width + offset
-        top += rect.height / 2 - 75; // Center vertically
+        left -= tooltipWidth + 10;
+        top += rect.height / 2 - tooltipHeight / 2; // Center vertically
+        // If tooltip would go off-screen to the left, place it on the right instead
+        if (left < 0) {
+          left = rect.left + rect.width + 10;
+        }
         break;
     }
     

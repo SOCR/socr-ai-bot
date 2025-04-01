@@ -35,11 +35,11 @@ export const demoQuestions = [
   { value: 'visualization', label: 'Create a boxplot for each numeric variable grouped by a categorical variable' },
 ];
 
-// Demo model choices
+// Demo model choices for AI models
 export const demoModelChoices = [
   { value: 'gpt-4o', label: 'GPT-4o (Recommended)' },
-  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
   { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (Faster)' },
+  { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
 ];
 
 // Sample data for demonstrations

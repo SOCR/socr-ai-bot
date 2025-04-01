@@ -6,6 +6,7 @@ import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ThemeToggle from './ThemeToggle';
 import Tutorial from './Tutorial';
+import { Step } from './Tutorial';
 
 interface NavbarProps {
   currentTab: string;
@@ -32,54 +33,78 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
     setMenuOpen(false);
   };
 
-  const tutorialSteps = [
+  const tutorialSteps: Step[] = [
     {
       target: '.navbar-logo',
       title: 'Welcome to SOCR AI Bot',
       content: 'This tutorial will guide you through the main features of the SOCR AI Bot application.',
-      position: 'bottom' as const
+      position: 'bottom'
     },
     {
       target: '#basic-tab',
       title: 'Basic Tab',
       content: 'Start here to analyze your data. Upload a dataset or choose from our demo datasets.',
-      position: 'bottom' as const
+      position: 'bottom'
     },
     {
       target: '#synth-text-tab',
       title: 'Synthetic Text',
-      content: 'Generate AI-written text based on your prompts. Requires an API key.',
-      position: 'bottom' as const
+      content: 'Generate AI-written text based on your prompts. Requires an OpenAI API key.',
+      position: 'bottom'
     },
     {
       target: '#synth-images-tab',
       title: 'Synthetic Images',
-      content: 'Create AI-generated images from text descriptions. Requires an API key.',
-      position: 'bottom' as const
+      content: 'Create AI-generated images from text descriptions. Requires an OpenAI API key.',
+      position: 'bottom'
+    },
+    {
+      target: '#brain-gen-tab',
+      title: 'Brain Data Generator',
+      content: 'Generate synthetic brain imaging data for research and educational purposes.',
+      position: 'bottom'
     },
     {
       target: '#data-tab',
       title: 'Data Tab',
-      content: 'View and explore your dataset in a tabular format.',
-      position: 'bottom' as const
+      content: 'View and explore your dataset in a tabular format with sorting and filtering options.',
+      position: 'bottom'
     },
     {
       target: '#report-tab',
       title: 'Report Tab',
-      content: 'Generate reports from your analyses in various formats.',
-      position: 'bottom' as const
+      content: 'Generate comprehensive reports from your analyses in various formats, including PDF and HTML.',
+      position: 'bottom'
+    },
+    {
+      target: '#eda-tab',
+      title: 'Exploratory Data Analysis',
+      content: 'Perform Exploratory Data Analysis with visualizations like histograms, scatter plots, and more.',
+      position: 'bottom'
+    },
+    {
+      target: '#ask-tab',
+      title: 'Ask AI',
+      content: 'Ask questions about statistics, data science, or get help interpreting your results.',
+      position: 'bottom'
+    },
+    {
+      target: '#about-tab',
+      title: 'About',
+      content: 'Learn more about the SOCR project, its mission, and the team behind this application.',
+      position: 'bottom'
     },
     {
       target: '#theme-toggle',
       title: 'Dark Mode',
       content: 'Toggle between light and dark mode for your visual comfort.',
-      position: 'left' as const
+      position: 'left'
     },
     {
       target: '#help-button',
       title: 'Help',
       content: 'You can always restart this tutorial by clicking this help button.',
-      position: 'left' as const
+      position: 'left'
     }
   ];
   
