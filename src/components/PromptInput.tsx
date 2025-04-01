@@ -11,6 +11,7 @@ interface PromptInputProps {
   buttonText?: string;
   rows?: number;
   selectLabel?: string;
+  isLoading?: boolean;
 }
 
 const PromptInput: React.FC<PromptInputProps> = ({
@@ -19,7 +20,8 @@ const PromptInput: React.FC<PromptInputProps> = ({
   onSubmit,
   buttonText = 'Submit',
   rows = 4,
-  selectLabel = 'Select example prompt'
+  selectLabel = 'Select example prompt',
+  isLoading = false
 }) => {
   const [prompt, setPrompt] = useState('');
 
@@ -68,9 +70,9 @@ const PromptInput: React.FC<PromptInputProps> = ({
         <Button 
           onClick={handleSubmit} 
           className="bg-socr-blue hover:bg-socr-darkblue"
-          disabled={!prompt.trim()}
+          disabled={!prompt.trim() || isLoading}
         >
-          {buttonText}
+          {isLoading ? 'Loading...' : buttonText}
         </Button>
       </div>
     </div>

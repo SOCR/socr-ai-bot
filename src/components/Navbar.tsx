@@ -37,49 +37,49 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
       target: '.navbar-logo',
       title: 'Welcome to SOCR AI Bot',
       content: 'This tutorial will guide you through the main features of the SOCR AI Bot application.',
-      position: 'bottom'
+      position: 'bottom' as const
     },
     {
       target: '#basic-tab',
       title: 'Basic Tab',
       content: 'Start here to analyze your data. Upload a dataset or choose from our demo datasets.',
-      position: 'bottom'
+      position: 'bottom' as const
     },
     {
       target: '#synth-text-tab',
       title: 'Synthetic Text',
       content: 'Generate AI-written text based on your prompts. Requires an API key.',
-      position: 'bottom'
+      position: 'bottom' as const
     },
     {
       target: '#synth-images-tab',
       title: 'Synthetic Images',
       content: 'Create AI-generated images from text descriptions. Requires an API key.',
-      position: 'bottom'
+      position: 'bottom' as const
     },
     {
       target: '#data-tab',
       title: 'Data Tab',
       content: 'View and explore your dataset in a tabular format.',
-      position: 'bottom'
+      position: 'bottom' as const
     },
     {
       target: '#report-tab',
       title: 'Report Tab',
       content: 'Generate reports from your analyses in various formats.',
-      position: 'bottom'
+      position: 'bottom' as const
     },
     {
       target: '#theme-toggle',
       title: 'Dark Mode',
       content: 'Toggle between light and dark mode for your visual comfort.',
-      position: 'left'
+      position: 'left' as const
     },
     {
       target: '#help-button',
       title: 'Help',
       content: 'You can always restart this tutorial by clicking this help button.',
-      position: 'left'
+      position: 'left' as const
     }
   ];
   
