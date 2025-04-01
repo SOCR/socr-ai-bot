@@ -117,5 +117,26 @@
 }
 
 .prose a {
-  @apply text-socr-blue hover:underline;
+  @apply text-socr-blue hover:underline dark:text-socr-lightblue;
+}
+
+/* Animation for tutorial highlight */
+@keyframes pulse-border {
+  0% {
+    outline-color: rgba(35, 134, 200, 0.5);
+  }
+  50% {
+    outline-color: rgba(35, 134, 200, 1);
+  }
+  100% {
+    outline-color: rgba(35, 134, 200, 0.5);
+  }
+}
+
+.tutorial-highlight {
+  animation: pulse-border 2s infinite;
+  outline: 2px solid rgba(35, 134, 200, 0.7);
+  outline-offset: 4px;
+  position: relative;
+  z-index: 1000;
 }

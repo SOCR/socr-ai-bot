@@ -108,11 +108,13 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left sidebar */}
         <div className="md:col-span-1 space-y-4">
-          <Card>
+          <Card className="dark:bg-gray-800 dark:border-gray-700">
             <CardContent className="p-4">
               <div className="flex justify-between items-center mb-4">
-                <p className="font-medium">Selected Dataset: {selectedDataset || (uploadedData?.name || 'None')}</p>
-                <Button variant="link" className="p-0" onClick={() => window.location.reload()}>
+                <p className="font-medium dark:text-gray-200">
+                  Selected Dataset: {selectedDataset || (uploadedData?.name || 'None')}
+                </p>
+                <Button variant="link" className="p-0 dark:text-socr-lightblue" onClick={() => window.location.reload()}>
                   Reset
                 </Button>
               </div>
@@ -120,10 +122,10 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
               <div className="space-y-4">
                 <div className="grid grid-cols-1 gap-2">
                   <Select onValueChange={handleDatasetSelect}>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger className="w-full dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600">
                       <SelectValue placeholder="Select a demo dataset" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="dark:bg-gray-800 dark:text-gray-200">
                       {demoDatasets.map((dataset) => (
                         <SelectItem key={dataset.value} value={dataset.value}>
                           {dataset.label}
@@ -132,7 +134,7 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
                     </SelectContent>
                   </Select>
                   
-                  <p className="text-sm text-center">or</p>
+                  <p className="text-sm text-center dark:text-gray-400">or</p>
                   
                   <DataUpload onDataUploaded={handleDataUpload} />
                 </div>
@@ -142,17 +144,18 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
                   demoPrompts={demoQuestions}
                   onSubmit={handleSubmit}
                   buttonText="Submit"
+                  isLoading={loading}
                   rows={6}
                   selectLabel="Select example prompt"
                 />
                 
                 <div className="flex justify-between mt-4">
-                  <Button variant="outline" onClick={onOpenSettings}>
+                  <Button variant="outline" onClick={onOpenSettings} className="dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600">
                     Settings
                   </Button>
                 </div>
                 
-                <div className="text-sm text-gray-500 mt-2">
+                <div className="text-sm text-gray-500 mt-2 dark:text-gray-400">
                   <p>API Usage: 0 tokens</p>
                   <p>Temperature: 0.7</p>
                   <p>Auto retry on error: Yes</p>
@@ -167,17 +170,17 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
         {/* Main content area */}
         <div className="md:col-span-2 space-y-4">
           {!result ? (
-            <Card>
+            <Card className="dark:bg-gray-800 dark:border-gray-700">
               <CardContent className="p-6">
                 <div className="flex flex-col items-center space-y-4 py-6">
                   <img 
-                    src="https://wiki.socr.umich.edu/images/thumb/5/5e/SOCR_UMich_2020a.png/1025px-SOCR_UMich_2020a.png" 
+                    src="/lovable-uploads/2ee5da75-de6a-4182-be30-93984b17ea5d.png" 
                     alt="SOCR Logo" 
                     className="h-24 w-auto"
                   />
                   <div className="text-center space-y-2 max-w-2xl">
-                    <h3 className="text-xl font-semibold">Welcome to SOCR AI Bot</h3>
-                    <p>
+                    <h3 className="text-xl font-semibold dark:text-white">Welcome to SOCR AI Bot</h3>
+                    <p className="dark:text-gray-300">
                       SOCR AI Bot provides a helpful human-machine interface. It utilizes SOCR and various 
                       generative-AI models trained on billions of pieces of information, thousands of books, 
                       millions of code repositories, and innumerable web pages, written in dozens of languages. 
@@ -187,13 +190,13 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
                   
                   <Accordion id="Instructions">
                     <AccordionItem title="Instructions" status="danger">
-                      <ul className="list-disc pl-5 space-y-2">
+                      <ul className="list-disc pl-5 space-y-2 dark:text-gray-300">
                         <li>Try simple experiments first before gradually adding complexity, specifying alternative plots, or choosing different models.</li>
                         <li>AI Bot is a prototype release expanding OpenAI API, RTutor, SOCRAT, and other resources. It's intended for simple and quick demonstrations, not heavy research, complicated studies, or high-throughput analytics.</li>
                         <li>When using generative-AI functionality (e.g., to synthetically generate text, images or software code), you have to use your own personal OpenAI unique key.</li>
                         <li>Experiment with parameter settings, e.g., increasing the "Temperature" setting may drive more aggressive AI predictions.</li>
-                        <li>Preprocess and prep the test data prior to loading it in the AI Bot. You can use <a href="https://socr.umich.edu/HTML5/SOCRAT/" className="text-blue-600 hover:underline">SOCRAT's data wrangling functionality</a> for preprocessing.</li>
-                        <li>An example dataset for testing data uploading is available <a href="https://socr.umich.edu/docs/uploads/2023/SOCR_Dataset_Gapminder.csv" className="text-blue-600 hover:underline">here</a>.</li>
+                        <li>Preprocess and prep the test data prior to loading it in the AI Bot. You can use <a href="https://socr.umich.edu/HTML5/SOCRAT/" className="text-socr-blue hover:underline dark:text-socr-lightblue">SOCRAT's data wrangling functionality</a> for preprocessing.</li>
+                        <li>An example dataset for testing data uploading is available <a href="https://socr.umich.edu/docs/uploads/2023/SOCR_Dataset_Gapminder.csv" className="text-socr-blue hover:underline dark:text-socr-lightblue">here</a>.</li>
                         <li>Confirm proper data type specifications: numeric columns and categories (factors or characters).</li>
                         <li>Each chunk of code is run independently using the selected/uploaded data. If you want to build upon the current code, select the "Continue from this chunk" checkbox.</li>
                       </ul>
@@ -204,9 +207,9 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
             </Card>
           ) : (
             <>
-              <Card>
+              <Card className="dark:bg-gray-800 dark:border-gray-700">
                 <CardHeader>
-                  <CardTitle className="text-lg">AI Generated Code</CardTitle>
+                  <CardTitle className="text-lg dark:text-white">AI Generated Code</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CodeBlock code={result.code} language="r" />
@@ -214,22 +217,22 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
               </Card>
               
               {result.error ? (
-                <Card className="border-red-200 bg-red-50">
+                <Card className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800/40">
                   <CardContent className="p-4">
-                    <p className="text-red-600 font-medium">Error:</p>
-                    <p className="font-mono text-sm">{result.error}</p>
+                    <p className="text-red-600 font-medium dark:text-red-300">Error:</p>
+                    <p className="font-mono text-sm dark:text-red-300">{result.error}</p>
                   </CardContent>
                 </Card>
               ) : (
                 <>
-                  <Card>
+                  <Card className="dark:bg-gray-800 dark:border-gray-700">
                     <CardHeader>
-                      <CardTitle className="text-lg">Results</CardTitle>
+                      <CardTitle className="text-lg dark:text-white">Results</CardTitle>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="dark:text-gray-300">
                       <p className="mb-4">{result.output}</p>
                       {result.plot && (
-                        <div className="border rounded-md p-2 bg-gray-50">
+                        <div className="border rounded-md p-2 bg-gray-50 dark:bg-gray-900 dark:border-gray-700">
                           <img 
                             src={result.plot} 
                             alt="Plot visualization" 

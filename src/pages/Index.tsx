@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -26,9 +26,19 @@ const Index = () => {
     temperature: 0.7,
     retryOnError: true,
   });
+  const [showTutorialFirstVisit, setShowTutorialFirstVisit] = useState(false);
   
   // App version
   const appVersion = '2.6.2';
+
+  // Check if this is the user's first visit
+  useEffect(() => {
+    const hasVisitedBefore = localStorage.getItem('socr-first-visit');
+    if (!hasVisitedBefore) {
+      setShowTutorialFirstVisit(true);
+      localStorage.setItem('socr-first-visit', 'true');
+    }
+  }, []);
   
   const handleTabChange = (tab: string) => {
     setCurrentTab(tab);
@@ -73,8 +83,19 @@ const Index = () => {
     }
   };
 
+  // Display welcome message on first visit
+  useEffect(() => {
+    if (showTutorialFirstVisit) {
+      toast({
+        title: "Welcome to SOCR AI Bot",
+        description: "Welcome! Look for the Help button in the navigation bar to start an interactive tutorial.",
+        duration: 8000,
+      });
+    }
+  }, [showTutorialFirstVisit, toast]);
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen dark:bg-gray-900">
       <Navbar currentTab={currentTab} onTabChange={handleTabChange} />
       
       <main className="flex-grow">

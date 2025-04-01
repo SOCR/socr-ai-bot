@@ -91,11 +91,20 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pulse-highlight': {
+					'0%, 100%': { 
+						outline: '2px solid rgba(35, 134, 200, 0.5)'
+					},
+					'50%': { 
+						outline: '2px solid rgba(35, 134, 200, 1)'
+					},
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-highlight': 'pulse-highlight 2s ease-in-out infinite'
 			}
 		}
 	},
