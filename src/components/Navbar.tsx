@@ -34,77 +34,226 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
   };
 
   const tutorialSteps: Step[] = [
+    // Welcome & Navigation
     {
       target: '.navbar-logo',
       title: 'Welcome to SOCR AI Bot',
-      content: 'This tutorial will guide you through the main features of the SOCR AI Bot application.',
-      position: 'bottom'
+      content: 'This tutorial will guide you through all features of the SOCR AI Bot application. Use the navigation buttons below to move through the tutorial.',
+      position: 'bottom' as const
     },
+    
+    // Basic Tab - Overview
     {
       target: '#basic-tab',
-      title: 'Basic Tab',
-      content: 'Start here to analyze your data. Upload a dataset or choose from our demo datasets.',
-      position: 'bottom'
+      title: 'Basic Tab Overview',
+      content: 'The Basic tab is your starting point for data analysis. Let\'s explore its features.',
+      position: 'bottom' as const,
+      tabId: 'basic'
     },
+    {
+      target: '.container .card:first-child',
+      title: 'Data Selection Panel',
+      content: 'This panel allows you to select a demo dataset or upload your own data for analysis.',
+      position: 'right' as const,
+      tabId: 'basic'
+    },
+    {
+      target: '[class*="DatasetSelector"]',
+      title: 'Dataset Selector',
+      content: 'Choose from pre-loaded demo datasets for quick analysis and exploration.',
+      position: 'right' as const,
+      tabId: 'basic'
+    },
+    {
+      target: '[class*="DataUpload"]',
+      title: 'Data Upload',
+      content: 'Upload your own data files in CSV, JSON, or Excel formats for custom analysis.',
+      position: 'right' as const,
+      tabId: 'basic'
+    },
+    {
+      target: '[class*="PromptInput"]',
+      title: 'Prompt Input',
+      content: 'Ask questions about your data or request specific analyses using natural language prompts.',
+      position: 'top' as const,
+      tabId: 'basic'
+    },
+    {
+      target: '[class*="FeedbackForm"]',
+      title: 'Feedback Form',
+      content: 'Share your feedback and suggestions to help improve the SOCR AI Bot.',
+      position: 'top' as const,
+      tabId: 'basic'
+    },
+    {
+      target: '.md\\:col-span-2',
+      title: 'Results Area',
+      content: 'View analysis results, visualizations, and AI-generated code in this area.',
+      position: 'left' as const,
+      tabId: 'basic'
+    },
+    
+    // Synth Text Tab
     {
       target: '#synth-text-tab',
-      title: 'Synthetic Text',
+      title: 'Synthetic Text Generation',
       content: 'Generate AI-written text based on your prompts. Requires an OpenAI API key.',
-      position: 'bottom'
+      position: 'bottom' as const,
+      tabId: 'synth-text'
     },
     {
-      target: '#synth-images-tab',
-      title: 'Synthetic Images',
-      content: 'Create AI-generated images from text descriptions. Requires an OpenAI API key.',
-      position: 'bottom'
+      target: '.container .card:first-child',
+      title: 'Text Generation Prompt',
+      content: 'Enter your prompt or choose from example prompts to generate synthetic text content.',
+      position: 'top' as const,
+      tabId: 'synth-text'
     },
+    {
+      target: '.container .card:nth-child(2)',
+      title: 'Generated Text Output',
+      content: 'View the AI-generated text results from your prompt here.',
+      position: 'top' as const,
+      tabId: 'synth-text'
+    },
+    
+    // Synth Images Tab
+    {
+      target: '#synth-images-tab',
+      title: 'Synthetic Image Generation',
+      content: 'Create AI-generated images from text descriptions. Requires an OpenAI API key.',
+      position: 'bottom' as const,
+      tabId: 'synth-images'
+    },
+    {
+      target: '.container .max-w-3xl',
+      title: 'Image Generation Interface',
+      content: 'Enter text prompts and adjust settings to generate images that match your description.',
+      position: 'right' as const,
+      tabId: 'synth-images'
+    },
+    
+    // Brain Gen Tab
     {
       target: '#brain-gen-tab',
       title: 'Brain Data Generator',
       content: 'Generate synthetic brain imaging data for research and educational purposes.',
-      position: 'bottom'
+      position: 'bottom' as const,
+      tabId: 'brain-gen'
     },
+    {
+      target: '.container .card:first-child',
+      title: 'Brain Data Parameters',
+      content: 'Configure parameters for generating synthetic brain imaging data, such as resolution and modality.',
+      position: 'top' as const, 
+      tabId: 'brain-gen'
+    },
+    
+    // Data Tab
     {
       target: '#data-tab',
       title: 'Data Tab',
       content: 'View and explore your dataset in a tabular format with sorting and filtering options.',
-      position: 'bottom'
+      position: 'bottom' as const,
+      tabId: 'data'
     },
+    {
+      target: '.container .card:first-child',
+      title: 'Data Table',
+      content: 'View your selected or uploaded dataset in a sortable, filterable table format.',
+      position: 'right' as const,
+      tabId: 'data'
+    },
+    {
+      target: '.container [class*="DataTable"]',
+      title: 'Interactive Data Table',
+      content: 'Sort columns, search data, and navigate through pages to explore your dataset in detail.',
+      position: 'top' as const,
+      tabId: 'data'
+    },
+    
+    // Report Tab
     {
       target: '#report-tab',
       title: 'Report Tab',
-      content: 'Generate comprehensive reports from your analyses in various formats, including PDF and HTML.',
-      position: 'bottom'
+      content: 'Generate comprehensive reports from your analyses in various formats.',
+      position: 'bottom' as const,
+      tabId: 'report'
     },
+    {
+      target: '.container .max-w-4xl',
+      title: 'Report Generator',
+      content: 'Create reports from your analyses with options for PDF, HTML, or other formats.',
+      position: 'top' as const,
+      tabId: 'report'
+    },
+    
+    // EDA Tab
     {
       target: '#eda-tab',
       title: 'Exploratory Data Analysis',
       content: 'Perform Exploratory Data Analysis with visualizations like histograms, scatter plots, and more.',
-      position: 'bottom'
+      position: 'bottom' as const,
+      tabId: 'eda'
     },
+    {
+      target: '.container .card:first-child',
+      title: 'EDA Visualization Tools',
+      content: 'Create various visualization types to explore relationships and patterns in your data.',
+      position: 'right' as const,
+      tabId: 'eda'
+    },
+    
+    // Ask Tab
     {
       target: '#ask-tab',
       title: 'Ask AI',
       content: 'Ask questions about statistics, data science, or get help interpreting your results.',
-      position: 'bottom'
+      position: 'bottom' as const, 
+      tabId: 'ask'
     },
+    {
+      target: '.container .max-w-4xl .card:first-child',
+      title: 'AI Question Interface',
+      content: 'Select an AI model and ask questions related to statistics, data science, or your analysis results.',
+      position: 'top' as const,
+      tabId: 'ask'
+    },
+    {
+      target: '.container .max-w-4xl .card:first-child [class*="Select"]',
+      title: 'AI Model Selection',
+      content: 'Choose from different AI models, each with varying capabilities and response speeds.',
+      position: 'top' as const,
+      tabId: 'ask'
+    },
+    
+    // About Tab
     {
       target: '#about-tab',
       title: 'About',
       content: 'Learn more about the SOCR project, its mission, and the team behind this application.',
-      position: 'bottom'
+      position: 'bottom' as const,
+      tabId: 'about'
     },
     {
+      target: '.container .prose',
+      title: 'About SOCR',
+      content: 'Read about the Statistical Online Computational Resource (SOCR) project, its history, and mission.',
+      position: 'top' as const,
+      tabId: 'about'
+    },
+    
+    // Theme and Help
+    {
       target: '#theme-toggle',
-      title: 'Dark Mode',
+      title: 'Theme Toggle',
       content: 'Toggle between light and dark mode for your visual comfort.',
-      position: 'left'
+      position: 'left' as const
     },
     {
       target: '#help-button',
-      title: 'Help',
+      title: 'Help Button',
       content: 'You can always restart this tutorial by clicking this help button.',
-      position: 'left'
+      position: 'left' as const
     }
   ];
   
@@ -155,7 +304,11 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
               <ThemeToggle />
             </span>
             <span id="help-button">
-              <Tutorial steps={tutorialSteps} />
+              <Tutorial 
+                steps={tutorialSteps} 
+                currentTab={currentTab}
+                onTabChange={handleTabClick}
+              />
             </span>
           </div>
         </div>

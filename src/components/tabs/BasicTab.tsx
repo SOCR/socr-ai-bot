@@ -128,12 +128,13 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
                   <DataUpload onDataUploaded={handleDataUpload} />
                 </div>
                 
+                {/* Fixed the isLoading prop issue by making sure component props match */}
                 <PromptInput
                   placeholder="Ask a question about your data or request a specific analysis..."
                   demoPrompts={demoQuestions}
                   onSubmit={handleSubmit}
                   buttonText="Submit"
-                  isLoading={loading}
+                  loading={loading}
                   rows={6}
                   selectLabel="Select example prompt"
                 />
