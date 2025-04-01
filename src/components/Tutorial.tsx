@@ -180,18 +180,27 @@ const Tutorial: React.FC<TutorialProps> = ({
       const originalStyles = highlightedElement.getAttribute('data-original-style') || '';
       highlightedElement.setAttribute('style', originalStyles);
       highlightedElement.removeAttribute('data-original-style');
+      
+      // Remove the overlay elements
       document.querySelectorAll('.tutorial-overlay').forEach(el => el.remove());
+      document.querySelectorAll('.tutorial-highlight-mask').forEach(el => el.remove());
     }
+    setHighlightedElement(null);
   };
 
   const jumpToSection = (sectionIndex: number) => {
+    setShowJumpMenu(false);
     if (sectionIndex >= 0 && sectionIndex < steps.length) {
       const targetStep = steps[sectionIndex];
       if (targetStep.tabId && targetStep.tabId !== currentTab && onTabChange) {
         onTabChange(targetStep.tabId);
+        // Small delay to allow tab change before continuing
+        setTimeout(() => {
+          setCurrentStep(sectionIndex);
+        }, 300);
+      } else {
+        setCurrentStep(sectionIndex);
       }
-      setCurrentStep(sectionIndex);
-      setShowJumpMenu(false);
     }
   };
 
@@ -214,12 +223,38 @@ const Tutorial: React.FC<TutorialProps> = ({
       `${originalStyles}; position: relative; z-index: 1000;`
     );
     
+    // Create a spotlight effect with masks
+    // Top mask
+    const createMask = (top: number, left: number, width: number, height: number, className: string) => {
+      const mask = document.createElement('div');
+      mask.className = className;
+      mask.style.position = 'fixed';
+      mask.style.top = `${top}px`;
+      mask.style.left = `${left}px`;
+      mask.style.width = `${width}px`;
+      mask.style.height = `${height}px`;
+      mask.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+      mask.style.zIndex = '998';
+      mask.style.pointerEvents = 'none';
+      document.body.appendChild(mask);
+    };
+    
+    // Create four masks to create a "spotlight" effect
+    // Top mask
+    createMask(0, 0, window.innerWidth, rect.top, 'tutorial-highlight-mask');
+    // Bottom mask
+    createMask(rect.bottom, 0, window.innerWidth, window.innerHeight - rect.bottom, 'tutorial-highlight-mask');
+    // Left mask
+    createMask(rect.top, 0, rect.left, rect.height, 'tutorial-highlight-mask');
+    // Right mask
+    createMask(rect.top, rect.right, window.innerWidth - rect.right, rect.height, 'tutorial-highlight-mask');
+    
     // Create a highlight effect with a pulse animation
     const overlay = document.createElement('div');
     overlay.className = 'tutorial-overlay';
-    overlay.style.position = 'absolute';
-    overlay.style.top = `${rect.top + scrollTop}px`;
-    overlay.style.left = `${rect.left + scrollLeft}px`;
+    overlay.style.position = 'fixed';
+    overlay.style.top = `${rect.top}px`;
+    overlay.style.left = `${rect.left}px`;
     overlay.style.width = `${rect.width}px`;
     overlay.style.height = `${rect.height}px`;
     overlay.style.boxShadow = '0 0 0 4px rgba(35, 134, 200, 0.8)';
@@ -236,11 +271,15 @@ const Tutorial: React.FC<TutorialProps> = ({
     style.textContent = `
       @keyframes pulse {
         0% { box-shadow: 0 0 0 0 rgba(35, 134, 200, 0.8); }
-        70% { box-shadow: 0 0 0 6px rgba(35, 134, 200, 0.0); }
+        70% { box-shadow: 0 0 0 8px rgba(35, 134, 200, 0.0); }
         100% { box-shadow: 0 0 0 0 rgba(35, 134, 200, 0.0); }
       }
     `;
     document.head.appendChild(style);
+  };
+
+  const handleJumpMenuToggle = (open: boolean) => {
+    setShowJumpMenu(open);
   };
 
   useEffect(() => {
@@ -321,7 +360,7 @@ const Tutorial: React.FC<TutorialProps> = ({
       <Card
         ref={tooltipRef}
         className={cn(
-          "fixed z-[1000] w-[320px] p-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg",
+          "fixed z-[1001] w-[320px] p-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg",
           "transition-all duration-300 ease-in-out"
         )}
         style={{
@@ -348,9 +387,9 @@ const Tutorial: React.FC<TutorialProps> = ({
           {steps[currentStep].content}
         </p>
         
-        {/* Jump to section dropdown */}
+        {/* Jump to section dropdown - fixed positioning */}
         <div className="mb-4">
-          <DropdownMenu open={showJumpMenu} onOpenChange={setShowJumpMenu}>
+          <DropdownMenu open={showJumpMenu} onOpenChange={handleJumpMenuToggle}>
             <DropdownMenuTrigger asChild>
               <Button 
                 variant="outline" 
@@ -361,7 +400,11 @@ const Tutorial: React.FC<TutorialProps> = ({
                 <Menu size={16} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-[250px] max-h-[300px] overflow-y-auto">
+            <DropdownMenuContent 
+              align="start" 
+              className="w-[250px] max-h-[300px] overflow-y-auto z-[1002]" 
+              sideOffset={5}
+            >
               {allSections.map((section) => (
                 <DropdownMenuItem 
                   key={section.tabId}
@@ -405,7 +448,7 @@ const Tutorial: React.FC<TutorialProps> = ({
                 View all tutorials
               </Button>
             </SheetTrigger>
-            <SheetContent className="w-[300px] sm:w-[400px]">
+            <SheetContent side="right" className="w-[300px] sm:w-[400px] z-[1002]">
               <SheetHeader>
                 <SheetTitle>Tutorial Sections</SheetTitle>
               </SheetHeader>
