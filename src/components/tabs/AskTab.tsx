@@ -76,13 +76,13 @@ const AskTab: React.FC = () => {
               </Select>
             </div>
 
-            {/* Fixed the isLoading prop issue by using loading instead */}
+            {/* Fixed loading to isLoading to match the PromptInput component's props */}
             <PromptInput
               placeholder="Ask a question about statistics, data science, or your analysis..."
               demoPrompts={demoPrompts}
               onSubmit={handleSubmit}
               buttonText="Ask Question"
-              loading={loading}
+              isLoading={loading}
               rows={5}
               selectLabel="Choose an example question"
             />
