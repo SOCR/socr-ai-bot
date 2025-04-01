@@ -1,9 +1,23 @@
 
-import { useState, useEffect } from 'react';
-import { X, ArrowRight, ArrowLeft, HelpCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, ArrowRight, ArrowLeft, HelpCircle, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
+import { 
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose
+} from '@/components/ui/sheet';
+import { 
+  DropdownMenu, 
+  DropdownMenuTrigger, 
+  DropdownMenuContent, 
+  DropdownMenuItem 
+} from '@/components/ui/dropdown-menu';
 
 export interface Step {
   target: string;
@@ -30,47 +44,96 @@ const Tutorial: React.FC<TutorialProps> = ({
   const [currentStep, setCurrentStep] = useState(0);
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0, height: 0 });
   const [highlightedElement, setHighlightedElement] = useState<Element | null>(null);
+  const [tooltipSize, setTooltipSize] = useState({ width: 320, height: 220 });
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [showJumpMenu, setShowJumpMenu] = useState(false);
+  
+  // Group steps by tab for the section menu
+  const getTabSections = () => {
+    const sections: {[key: string]: {name: string, steps: number[]}} = {};
+    
+    steps.forEach((step, index) => {
+      if (step.tabId) {
+        if (!sections[step.tabId]) {
+          sections[step.tabId] = {
+            name: step.tabId.charAt(0).toUpperCase() + step.tabId.slice(1).replace('-', ' '),
+            steps: []
+          };
+        }
+        sections[step.tabId].steps.push(index);
+      }
+    });
+    
+    return sections;
+  };
+  
+  const sections = getTabSections();
 
   const calculatePosition = (targetElement: Element, position: 'top' | 'right' | 'bottom' | 'left' = 'bottom') => {
     const rect = targetElement.getBoundingClientRect();
     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
     
+    // Get window dimensions
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // Get tooltip dimensions from ref or use defaults
+    const tooltipWidth = tooltipSize.width;
+    const tooltipHeight = tooltipSize.height;
+    
     let top = rect.top + scrollTop;
     let left = rect.left + scrollLeft;
-    const tooltipWidth = 320; // Slightly wider for better readability
-    const tooltipHeight = 180; // Slightly taller for more content
-    const windowWidth = window.innerWidth;
     
+    // Add padding for visual separation
+    const padding = 12;
+    
+    // Calculate position based on specified position
     switch (position) {
       case 'top':
-        top -= tooltipHeight + 10; // Tooltip height + offset
-        left += rect.width / 2 - tooltipWidth / 2; // Center horizontally
-        // Ensure tooltip stays within viewport horizontally
-        left = Math.max(10, Math.min(left, window.innerWidth - tooltipWidth - 10));
+        top = rect.top + scrollTop - tooltipHeight - padding;
+        left = rect.left + scrollLeft + rect.width / 2 - tooltipWidth / 2;
         break;
       case 'right':
-        left += rect.width + 10;
-        top += rect.height / 2 - tooltipHeight / 2; // Center vertically
-        // If tooltip would go off-screen to the right, place it on the left instead
-        if (left + tooltipWidth > windowWidth) {
-          left = rect.left - tooltipWidth - 10;
-        }
+        left = rect.left + scrollLeft + rect.width + padding;
+        top = rect.top + scrollTop + rect.height / 2 - tooltipHeight / 2;
         break;
       case 'bottom':
-        top += rect.height + 10;
-        left += rect.width / 2 - tooltipWidth / 2; // Center horizontally
-        // Ensure tooltip stays within viewport horizontally
-        left = Math.max(10, Math.min(left, window.innerWidth - tooltipWidth - 10));
+        top = rect.top + scrollTop + rect.height + padding;
+        left = rect.left + scrollLeft + rect.width / 2 - tooltipWidth / 2;
         break;
       case 'left':
-        left -= tooltipWidth + 10;
-        top += rect.height / 2 - tooltipHeight / 2; // Center vertically
-        // If tooltip would go off-screen to the left, place it on the right instead
-        if (left < 0) {
-          left = rect.left + rect.width + 10;
-        }
+        left = rect.left + scrollLeft - tooltipWidth - padding;
+        top = rect.top + scrollTop + rect.height / 2 - tooltipHeight / 2;
         break;
+    }
+    
+    // Ensure tooltip stays within viewport bounds
+    // Check if tooltip would go off the right side of the window
+    if (left + tooltipWidth > windowWidth - padding) {
+      left = windowWidth - tooltipWidth - padding;
+    }
+    
+    // Check if tooltip would go off the left side of the window
+    if (left < padding) {
+      left = padding;
+    }
+    
+    // Check if tooltip would go off the bottom of the window
+    if (top + tooltipHeight > windowHeight + scrollTop - padding) {
+      // Try to place it above instead
+      const topAbove = rect.top + scrollTop - tooltipHeight - padding;
+      if (topAbove > scrollTop + padding) {
+        top = topAbove;
+      } else {
+        // If above doesn't work either, place it where it fits best
+        top = windowHeight + scrollTop - tooltipHeight - padding;
+      }
+    }
+    
+    // Check if tooltip would go off the top of the window
+    if (top < scrollTop + padding) {
+      top = scrollTop + padding;
     }
     
     return {
@@ -90,8 +153,7 @@ const Tutorial: React.FC<TutorialProps> = ({
       }
       setCurrentStep(currentStep + 1);
     } else {
-      setIsOpen(false);
-      if (onComplete) onComplete();
+      handleClose();
     }
   };
 
@@ -108,13 +170,18 @@ const Tutorial: React.FC<TutorialProps> = ({
 
   const handleClose = () => {
     setIsOpen(false);
+    cleanupHighlight();
+    if (onComplete) onComplete();
+  };
+
+  const cleanupHighlight = () => {
+    // Clean up any styles on the highlighted element
     if (highlightedElement) {
-      // Clean up any styles on the highlighted element
       const originalStyles = highlightedElement.getAttribute('data-original-style') || '';
       highlightedElement.setAttribute('style', originalStyles);
       highlightedElement.removeAttribute('data-original-style');
+      document.querySelectorAll('.tutorial-overlay').forEach(el => el.remove());
     }
-    if (onComplete) onComplete();
   };
 
   const jumpToSection = (sectionIndex: number) => {
@@ -124,58 +191,105 @@ const Tutorial: React.FC<TutorialProps> = ({
         onTabChange(targetStep.tabId);
       }
       setCurrentStep(sectionIndex);
+      setShowJumpMenu(false);
     }
   };
 
-  // Group steps by tab for the section menu
-  const getTabSections = () => {
-    const sections: {[key: string]: {name: string, startIndex: number}} = {};
+  // Enhanced highlighting with overlay
+  const highlightElement = (targetElement: Element) => {
+    cleanupHighlight();
     
-    steps.forEach((step, index) => {
-      if (step.tabId && !sections[step.tabId]) {
-        sections[step.tabId] = {
-          name: step.tabId.charAt(0).toUpperCase() + step.tabId.slice(1).replace('-', ' '),
-          startIndex: index
-        };
+    const rect = targetElement.getBoundingClientRect();
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+    
+    // Save original styles
+    const originalStyles = targetElement.getAttribute('style') || '';
+    targetElement.setAttribute('data-original-style', originalStyles);
+    
+    // Apply highlight styles - we'll use a relative position and z-index
+    // but avoid changing the original layout
+    targetElement.setAttribute(
+      'style', 
+      `${originalStyles}; position: relative; z-index: 1000;`
+    );
+    
+    // Create a highlight effect with a pulse animation
+    const overlay = document.createElement('div');
+    overlay.className = 'tutorial-overlay';
+    overlay.style.position = 'absolute';
+    overlay.style.top = `${rect.top + scrollTop}px`;
+    overlay.style.left = `${rect.left + scrollLeft}px`;
+    overlay.style.width = `${rect.width}px`;
+    overlay.style.height = `${rect.height}px`;
+    overlay.style.boxShadow = '0 0 0 4px rgba(35, 134, 200, 0.8)';
+    overlay.style.borderRadius = '4px';
+    overlay.style.pointerEvents = 'none';
+    overlay.style.zIndex = '999';
+    overlay.style.animation = 'pulse 2s infinite';
+    
+    document.body.appendChild(overlay);
+    
+    // Add keyframe animation for the pulse effect
+    const style = document.createElement('style');
+    style.className = 'tutorial-overlay';
+    style.textContent = `
+      @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(35, 134, 200, 0.8); }
+        70% { box-shadow: 0 0 0 6px rgba(35, 134, 200, 0.0); }
+        100% { box-shadow: 0 0 0 0 rgba(35, 134, 200, 0.0); }
       }
-    });
-    
-    return sections;
+    `;
+    document.head.appendChild(style);
   };
 
   useEffect(() => {
     if (isOpen && steps[currentStep]) {
-      const targetElement = document.querySelector(steps[currentStep].target);
-      if (targetElement) {
-        // Store the current highlighted element to clean up later
-        setHighlightedElement(targetElement);
-        
-        const pos = calculatePosition(targetElement, steps[currentStep].position);
-        setPosition(pos);
-        
-        // Scroll target into view with some delay to ensure tab switching is complete
-        setTimeout(() => {
+      // Slight delay to ensure tab switching is complete
+      const timer = setTimeout(() => {
+        const targetElement = document.querySelector(steps[currentStep].target);
+        if (targetElement) {
+          // Store the current highlighted element to clean up later
+          setHighlightedElement(targetElement);
+          
+          // Enhanced highlighting
+          highlightElement(targetElement);
+          
+          // Calculate tooltip position
+          const pos = calculatePosition(targetElement, steps[currentStep].position);
+          setPosition(pos);
+          
+          // Scroll target into view with smooth behavior
           targetElement.scrollIntoView({
             behavior: 'smooth',
             block: 'center'
           });
-        }, 100);
-        
-        // Save original styles and highlight the element
-        const originalStyles = targetElement.getAttribute('style') || '';
-        targetElement.setAttribute('data-original-style', originalStyles);
-        targetElement.setAttribute(
-          'style', 
-          `${originalStyles}; outline: 2px solid #2386c8; outline-offset: 4px; position: relative; z-index: 1000;`
-        );
-        
-        return () => {
-          // Clean up styles when step changes
-          targetElement.setAttribute('style', originalStyles);
-        };
-      }
+          
+          // Update tooltip size from ref
+          if (tooltipRef.current) {
+            const tooltipRect = tooltipRef.current.getBoundingClientRect();
+            setTooltipSize({ 
+              width: tooltipRect.width, 
+              height: tooltipRect.height 
+            });
+          }
+        }
+      }, 300); // Delay to ensure tab switching is complete
+      
+      return () => {
+        clearTimeout(timer);
+        cleanupHighlight();
+      };
     }
   }, [currentStep, isOpen, steps, currentTab]);
+
+  // Update position when tooltip size changes
+  useEffect(() => {
+    if (highlightedElement && tooltipRef.current) {
+      const pos = calculatePosition(highlightedElement, steps[currentStep].position);
+      setPosition(pos);
+    }
+  }, [tooltipSize]);
 
   if (!isOpen) {
     return (
@@ -191,15 +305,21 @@ const Tutorial: React.FC<TutorialProps> = ({
     );
   }
 
-  const sections = getTabSections();
+  // Create a list of all major sections for the jump menu
+  const allSections = Object.entries(sections).map(([tabId, section]) => ({
+    tabId,
+    name: section.name,
+    firstStep: section.steps[0]
+  }));
 
   return (
     <>
-      {/* Overlay */}
-      <div className="fixed inset-0 bg-black/50 z-[999]" onClick={handleClose} />
+      {/* Semi-transparent overlay */}
+      <div className="fixed inset-0 bg-black/30 z-[999]" onClick={handleClose} />
       
       {/* Tutorial card */}
       <Card
+        ref={tooltipRef}
         className={cn(
           "fixed z-[1000] w-[320px] p-4 bg-white dark:bg-gray-800 shadow-lg rounded-lg",
           "transition-all duration-300 ease-in-out"
@@ -223,27 +343,36 @@ const Tutorial: React.FC<TutorialProps> = ({
             <X size={16} />
           </Button>
         </div>
+        
         <p className="text-gray-700 dark:text-gray-300 mb-4">
           {steps[currentStep].content}
         </p>
         
         {/* Jump to section dropdown */}
-        {Object.keys(sections).length > 1 && (
-          <div className="mb-3">
-            <select 
-              className="w-full p-2 text-sm rounded border border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-              onChange={(e) => jumpToSection(parseInt(e.target.value))}
-              value={currentStep}
-            >
-              <option value={currentStep}>Jump to section...</option>
-              {Object.entries(sections).map(([tabId, section]) => (
-                <option key={tabId} value={section.startIndex}>
+        <div className="mb-4">
+          <DropdownMenu open={showJumpMenu} onOpenChange={setShowJumpMenu}>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full flex justify-between items-center"
+              >
+                <span>Jump to section</span>
+                <Menu size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-[250px] max-h-[300px] overflow-y-auto">
+              {allSections.map((section) => (
+                <DropdownMenuItem 
+                  key={section.tabId}
+                  onClick={() => jumpToSection(section.firstStep)}
+                >
                   {section.name}
-                </option>
+                </DropdownMenuItem>
               ))}
-            </select>
-          </div>
-        )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         
         <div className="flex justify-between items-center">
           <Button
@@ -266,6 +395,53 @@ const Tutorial: React.FC<TutorialProps> = ({
           >
             {currentStep === steps.length - 1 ? 'Finish' : 'Next'} <ArrowRight size={16} />
           </Button>
+        </div>
+        
+        {/* Quick navigation bar */}
+        <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full text-xs">
+                View all tutorials
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-[300px] sm:w-[400px]">
+              <SheetHeader>
+                <SheetTitle>Tutorial Sections</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 space-y-4">
+                {Object.entries(sections).map(([tabId, section]) => (
+                  <div key={tabId} className="space-y-2">
+                    <h4 className="font-medium text-sm">{section.name}</h4>
+                    <div className="space-y-1 pl-2">
+                      {section.steps.map((stepIndex) => (
+                        <Button 
+                          key={stepIndex} 
+                          variant="ghost" 
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start text-left text-xs",
+                            currentStep === stepIndex ? "bg-muted font-medium" : ""
+                          )}
+                          onClick={() => {
+                            jumpToSection(stepIndex);
+                            document.querySelector<HTMLButtonElement>('[data-state="open"] .close-sheet')?.click();
+                          }}
+                        >
+                          {steps[stepIndex].title}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="absolute bottom-4 right-4">
+                <SheetClose className="close-sheet">
+                  <Button size="sm">Close</Button>
+                </SheetClose>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </Card>
     </>

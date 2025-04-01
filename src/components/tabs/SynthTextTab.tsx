@@ -68,7 +68,7 @@ const SynthTextTab: React.FC = () => {
               onSubmit={handleSubmit}
               buttonText="Generate Synth Text"
               selectLabel="Choose an example prompt"
-              loading={loading}
+              isLoading={loading}
             />
           </CardContent>
         </Card>
