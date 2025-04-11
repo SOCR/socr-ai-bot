@@ -1,21 +1,28 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import PromptInput from '../PromptInput';
 import { Loader2 } from 'lucide-react';
+import openaiApiClient, { ChatMessage } from '../../services/openaiApiClient';
 
 const AskTab: React.FC = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState('gpt-4o');
+  const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
+  // const [messages, setMessages] = useState<ChatMessage[]>([
+  //   { role: 'system', content: "You are an AI Bot developed by the SOCR (Statistical Online Computational Resource) Team that is specialized in the medical and statistics field. When faced with complex questions, think through the problem step by step before arriving at a conclusion." },
+  // ]);
 
+      
   const modelOptions = [
-    { value: 'gpt-4o', label: 'GPT-4o (Recommended)' },
-    { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (Faster)' },
-    { value: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+    { value: 'gpt-4o-mini', label: 'Choose Model: (Default GPT-4o-mini)' },
+    { value: 'gpt-4o', label: 'GPT-4o' },
+    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+    { value: 'gemini-2.0-flash-lite', label: 'Gemini 2.0 Flash Lite' },
+    { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+    { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
   ];
 
   const demoPrompts = [
@@ -30,8 +37,20 @@ const AskTab: React.FC = () => {
     setLoading(true);
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setResult(`Here's an answer for your question: "${prompt}"\n\nThis would be a detailed response from the AI model, explaining concepts, providing examples, and offering insights based on your query.`);
+      // await new Promise(resolve => setTimeout(resolve, 1500)); //for timer
+      const userMessage: ChatMessage = {role: 'user', content: prompt};
+      const systemMessage: ChatMessage = {role: 'system', content: "You are an AI Bot developed by the SOCR (Statistical Online Computational Resource) Team that is specialized in the medical and statistics field. When faced with complex questions, think through the problem step by step before arriving at a conclusion."};
+      // setMessages(prevMessages => [...prevMessages, userMessage]); 
+
+      // const allMessages = [userMessage, systemMessage]
+
+      const response = await openaiApiClient.sendMessage([userMessage, systemMessage]); //this line is not working
+      const assistantMessage: ChatMessage[] = [{role: 'assistant', content: response}];
+      // allMessages = [...assistantMessage];
+      // setMessages(prevMessages => [...prevMessages, assistantMessage]); 
+
+      
+      setResult(`SOCR AI-Bot: "${assistantMessage[0].content}"`);
     } catch (error) {
       toast({
         title: "Error",
