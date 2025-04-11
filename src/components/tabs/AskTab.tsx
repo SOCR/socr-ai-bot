@@ -11,10 +11,7 @@ const AskTab: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
-  // const [messages, setMessages] = useState<ChatMessage[]>([
-  //   { role: 'system', content: "You are an AI Bot developed by the SOCR (Statistical Online Computational Resource) Team that is specialized in the medical and statistics field. When faced with complex questions, think through the problem step by step before arriving at a conclusion." },
-  // ]);
-
+  const [history, setHistory] = useState<ChatMessage[]>([]);
       
   const modelOptions = [
     { value: 'gpt-4o-mini', label: 'Choose Model: (Default GPT-4o-mini)' },
@@ -43,14 +40,29 @@ const AskTab: React.FC = () => {
       // setMessages(prevMessages => [...prevMessages, userMessage]); 
 
       // const allMessages = [userMessage, systemMessage]
+      
+      // Send whole conversation to the API
+      const messagesForApi = [systemMessage, userMessage];
 
-      const response = await openaiApiClient.sendMessage([userMessage, systemMessage]); //this line is not working
-      const assistantMessage: ChatMessage[] = [{role: 'assistant', content: response}];
+      let response: string;
+
+      if(selectedModel.startsWith("gpt")){ //if GPT model
+        response = await openaiApiClient.sendMessage(messagesForApi, selectedModel);
+      }
+      else if (selectedModel.startsWith("gemini")){ //if Gemini model
+        response = "TODO: Gemini API call"; // Placeholder for Gemini API call
+      }
+      response = await openaiApiClient.sendMessage(messagesForApi, 'gpt-4o-mini'); //this line is not working
+      const assistantMessage: ChatMessage = {role: 'assistant', content: response};
+
+      // Update the chat history so that all previous conversations remain.
+      setHistory(prevHistory => [...prevHistory, userMessage, assistantMessage]);
+
       // allMessages = [...assistantMessage];
       // setMessages(prevMessages => [...prevMessages, assistantMessage]); 
 
       
-      setResult(`SOCR AI-Bot: "${assistantMessage[0].content}"`);
+      setResult(`SOCR AI-Bot: "${assistantMessage.content}"`);
     } catch (error) {
       toast({
         title: "Error",
@@ -114,7 +126,9 @@ const AskTab: React.FC = () => {
               <Loader2 className="h-8 w-8 animate-spin text-socr-blue" />
             </CardContent>
           </Card>
-        ) : result ? (
+        )
+        /*
+        : result ? (
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">AI Response</CardTitle>
@@ -125,7 +139,56 @@ const AskTab: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        ) : null}
+          ) 
+        */
+         : null}
+
+        {/* Display chat history below the current answer */}
+        {history.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">AI Response</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {(() => {
+                  const conversationPairs: ChatMessage[][] = [];
+                  // Group every two messages into a pair
+                  for (let i = 0; i < history.length; i += 2) {
+                    conversationPairs.push(history.slice(i, i + 2));
+                  }
+                  // Reverse the conversation pairs so the latest turn appears on top
+                  return conversationPairs.reverse().map((pair, i) => (
+                    <div key={i}>
+                      {pair.map((message, j) => (
+                        <div
+                          key={j}
+                          className={`p-2 rounded ${
+                            message.role === 'user'
+                              ? 'bg-blue-50'
+                              : message.role === 'assistant'
+                              ? 'bg-green-50'
+                              : 'bg-gray-50'
+                          }`}
+                        >
+                          <strong>
+                            {message.role === 'user'
+                              ? 'You'
+                              : message.role === 'assistant'
+                              ? 'SOCR AI-Bot'
+                              : 'System'}
+                            :
+                          </strong>{' '}
+                          {message.content}
+                        </div>
+                      ))}
+                    </div>
+                  ));
+                })()}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

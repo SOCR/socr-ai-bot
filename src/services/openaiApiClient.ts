@@ -15,10 +15,10 @@ export interface ChatMessage {
 // OpenAI API client
 const openaiApiClient = {
   // Send messages to OpenAI and get a response
-  sendMessage: async (messages: ChatMessage[]): Promise<string> => {
+  sendMessage: async (messages: ChatMessage[], model_name: string = 'gpt-3.5-turbo'): Promise<string> => {
     try {
       const response = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo', // You can change this to a different model
+        model: model_name, // You can change this to a different model
         messages: messages,
         temperature: 0.7,
       });
