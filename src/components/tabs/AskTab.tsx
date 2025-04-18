@@ -4,7 +4,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/components/ui/use-toast';
 import PromptInput from '../PromptInput';
 import { Loader2 } from 'lucide-react';
-import openaiApiClient, { ChatMessage } from '../../services/openaiApiClient';
+import openaiApiClient from '../../services/openaiApiClient';
+import googleApiClient from '../../services/googleApiClient';
+import { ChatMessage } from '../../services/types'; 
+
 
 const AskTab: React.FC = () => {
   const { toast } = useToast();
@@ -33,41 +36,40 @@ const AskTab: React.FC = () => {
   const handleSubmit = async (prompt: string) => {
     setLoading(true);
     try {
-      // Simulate API call
-      // await new Promise(resolve => setTimeout(resolve, 1500)); //for timer
-      const userMessage: ChatMessage = {role: 'user', content: prompt};
-      const systemMessage: ChatMessage = {role: 'system', content: "You are an AI Bot developed by the SOCR (Statistical Online Computational Resource) Team that is specialized in the medical and statistics field. When faced with complex questions, think through the problem step by step before arriving at a conclusion."};
-      // setMessages(prevMessages => [...prevMessages, userMessage]); 
-
-      // const allMessages = [userMessage, systemMessage]
-      
-      // Send whole conversation to the API
+      const userMessage: ChatMessage = {
+        role: 'user',
+        content: prompt,
+      };
+  
+      const systemMessage: ChatMessage = {
+        role: 'system',
+        content:
+          "You are an AI Bot developed by the SOCR (Statistical Online Computational Resource) Team that is specialized in the medical and statistics field. When faced with complex questions, think through the problem step by step before arriving at a conclusion.",
+      };
+  
       const messagesForApi = [systemMessage, userMessage];
-
       let response: string;
-
-      if(selectedModel.startsWith("gpt")){ //if GPT model
+  
+      if (selectedModel.startsWith("gpt")) {
         response = await openaiApiClient.sendMessage(messagesForApi, selectedModel);
+      } else if (selectedModel.startsWith("gemini")) {
+        response = await googleApiClient.sendMessage(messagesForApi, selectedModel);
+      } else {
+        throw new Error("Unsupported model selected.");
       }
-      else if (selectedModel.startsWith("gemini")){ //if Gemini model
-        response = "TODO: Gemini API call"; // Placeholder for Gemini API call
-      }
-      response = await openaiApiClient.sendMessage(messagesForApi, 'gpt-4o-mini'); //this line is not working
-      const assistantMessage: ChatMessage = {role: 'assistant', content: response};
-
-      // Update the chat history so that all previous conversations remain.
-      setHistory(prevHistory => [...prevHistory, userMessage, assistantMessage]);
-
-      // allMessages = [...assistantMessage];
-      // setMessages(prevMessages => [...prevMessages, assistantMessage]); 
-
-      
+  
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: response,
+      };
+  
+      setHistory((prev) => [...prev, userMessage, assistantMessage]);
       setResult(`SOCR AI-Bot: "${assistantMessage.content}"`);
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to get a response. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
