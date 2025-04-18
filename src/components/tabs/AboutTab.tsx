@@ -112,6 +112,7 @@ const AboutTab: React.FC<AboutTabProps> = ({ version }) => {
         <Accordion id="Update_log">
           <AccordionItem title="Update log" status="danger">
             <ul className="space-y-1 list-disc pl-5">
+              <li>V3.0 CURRENTLY UPDATING - Refactored frontend & backend pipeline</li>
               <li>V2.6.2 3/18/2025 - Fixed and added new ChatGPT & Gemini models</li>
               <li>V2.6 10/15/2024 - Integrated Synthetic Brain Data Generator application</li>
               <li>V2.5.2 9/27/2024 - Fixed DALLE image generation and plot generation</li>
