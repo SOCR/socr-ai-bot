@@ -76,6 +76,10 @@ const BasicTab: React.FC<BasicTabProps> = ({
     setPrompt(inputPrompt);
     setLoading(true);
     
+    // Get dataset summary and preview rows from uploadedData if available
+    const datasetSummary = uploadedData?.summary || null;
+    const datasetRows = uploadedData?.data ? uploadedData.data.slice(0, 20) : null;
+
     try {
       // In a real implementation, this would actually execute R code on a backend server
       const response = await apiService.executeRCode(
@@ -98,13 +102,17 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
         setResult({
           code: `# R code for: "${inputPrompt}"\nlibrary(ggplot2)\n\n# Simple data analysis\nsummary(df)\n\n# Create a visualization\nggplot(df, aes(x = factor(cyl), y = mpg)) +\n  geom_boxplot() +\n  labs(title = "MPG by Number of Cylinders",\n       x = "Cylinders",\n       y = "Miles Per Gallon")`,
           output: "Here's a summary of the data and a visualization showing the relationship between cylinders and MPG.",
-          plot: 'https://mdn.github.io/dom-examples/canvas/pixel-manipulation/bicycle.png' // Example placeholder image
+          plot: 'https://mdn.github.io/dom-examples/canvas/pixel-manipulation/bicycle.png', // Example placeholder image
+          datasetSummary,
+          datasetRows
         });
       } else {
         setResult({
           code: `# Attempted R code for: "${inputPrompt}"`,
           output: "",
-          error: response.error || 'An unknown error occurred'
+          error: response.error || 'An unknown error occurred',
+          datasetSummary,
+          datasetRows
         });
         toast({
           title: "Error",
@@ -122,7 +130,9 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
       setResult({
         code: `# Attempted R code for: "${inputPrompt}"`,
         output: "",
-        error: error instanceof Error ? error.message : 'An unknown error occurred'
+        error: error instanceof Error ? error.message : 'An unknown error occurred',
+        datasetSummary,
+        datasetRows
       });
     } finally {
       setLoading(false);
