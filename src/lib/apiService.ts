@@ -1,5 +1,5 @@
-
 // Service for making API calls to the backend R server
+import { executeRCode as webRExecuteCode } from './webr';
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -40,18 +40,38 @@ class ApiService {
   
   async executeRCode(code: string, data?: any): Promise<ApiResponse> {
     try {
-      // In a real implementation, this would send the code to the R server
-      console.log('Executing R code:', code);
-      console.log('With data:', data);
+      console.log('Executing R code with WebR:', code);
       
-      // For demo purposes, we'll just simulate a response
-      return {
-        success: true,
-        data: {
-          result: 'R code executed successfully',
-          plot: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='
+      // Extract dataset name and uploaded data
+      let datasetName = null;
+      let uploadedData = null;
+      
+      if (data) {
+        if (typeof data === 'string') {
+          datasetName = data;
+        } else {
+          uploadedData = data;
         }
-      };
+      }
+      
+      // Execute the code using WebR
+      const result = await webRExecuteCode(code, datasetName, uploadedData);
+      
+      if (result.success) {
+        return {
+          success: true,
+          data: {
+            result: result.output || 'R code executed successfully',
+            plot: result.plot || null,
+            output: result.output || ''
+          }
+        };
+      } else {
+        return {
+          success: false,
+          error: result.error || 'Error executing R code'
+        };
+      }
     } catch (error) {
       console.error('Error executing R code:', error);
       return {

@@ -139,6 +139,13 @@ DO NOT include any markdown formatting or backticks. Output pure R code only.`;
         generatedCode = await googleApiClient.sendMessage(messagesForApi, selectedModel);
       }
 
+      // Show a notification that we're executing the code (and possibly installing packages)
+      toast({
+        title: "Executing R Code",
+        description: "Running your analysis... any required packages will be automatically installed.",
+        duration: 5000
+      });
+
       // Execute the LLM-generated code on the backend
       const response = await apiService.executeRCode(
         generatedCode,
@@ -148,8 +155,8 @@ DO NOT include any markdown formatting or backticks. Output pure R code only.`;
       if (response.success) {
         setResult({
           code: generatedCode,
-          output: response.output || "Code executed successfully. Results shown below.",
-          plot: response.plot || 'https://mdn.github.io/dom-examples/canvas/pixel-manipulation/bicycle.png', // Example placeholder image
+          output: response.data?.output || "Code executed successfully. Results shown below.",
+          plot: response.data?.plot || undefined, // Use actual plot from WebR if available
           datasetSummary,
           datasetRows
         });
