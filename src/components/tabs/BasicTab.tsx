@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { listDatasets, fetchDataset } from '@/lib/webr';
 import FeedbackForm from '../FeedbackForm';
 import apiService from '@/lib/apiService';
 import { demoQuestions } from '@/lib/demoData';
@@ -24,6 +25,7 @@ const BasicTab: React.FC<BasicTabProps> = ({ onOpenSettings }) => {
   }>(null);
   const [selectedDataset, setSelectedDataset] = useState<string | null>(null);
   const [uploadedData, setUploadedData] = useState<any | null>(null);
+  const [datasetOptions, setDatasetOptions] = useState<{ value: string; label: string }[]>([]);
   
   const handleSubmit = async (inputPrompt: string) => {
     if (!inputPrompt.trim()) return;
@@ -84,14 +86,37 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
     }
   };
   
-  const handleDatasetSelect = (value: string) => {
+  // const handleDatasetSelect = (value: string) => {
+  //   setSelectedDataset(value);
+  //   setUploadedData(null);
+  //   toast({
+  //     title: "Dataset Selected",
+  //     description: `Using the ${value} dataset`
+  //   });
+  // };
+
+  const handleDatasetSelect = async (value: string) => {
+    setLoading(true);
+    try {
+    const rows = await fetchDataset(value);          // grab the whole frame
     setSelectedDataset(value);
-    setUploadedData(null);
+    setUploadedData(rows);                           // reuse existing prop
     toast({
-      title: "Dataset Selected",
-      description: `Using the ${value} dataset`
+    title: "Dataset Selected",
+    description: `Loaded ${value} (${rows.length} rows)`
     });
+    } catch (err) {
+    console.error(err);
+    toast({
+    title: "Error",
+    description: "Could not load dataset",
+    variant: "destructive"
+    });
+    } finally {
+    setLoading(false);
+    }
   };
+  
   
   const handleDataUpload = (data: any) => {
     setUploadedData(data);

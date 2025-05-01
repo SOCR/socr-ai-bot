@@ -6,6 +6,7 @@ export const demoDatasets = [
   { value: 'mtcars', label: 'Motor Trend Cars' },
   { value: 'diamonds', label: 'Diamonds' },
   { value: 'gapminder', label: 'Gapminder' },
+  { value: 'USArrests', label: 'USArrests' },
 ];
 
 // Demo prompts for synthetic text generation
