@@ -5,6 +5,7 @@ import { ExternalLink } from 'lucide-react';
 import PromptInput from '../PromptInput';
 import DataUpload from '../DataUpload';
 import DatasetSelector from '../DatasetSelector';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface ControlPanelProps {
   selectedDataset: string | null;
@@ -17,6 +18,9 @@ interface ControlPanelProps {
   demoPrompts: { value: string; label: string }[];
   datasetOptions: { value: string; label: string }[];
   onNavigateToDataTab?: () => void;
+  selectedModel?: string;
+  onModelChange?: (value: string) => void;
+  modelOptions?: { value: string; label: string }[];
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
@@ -29,7 +33,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   loading,
   demoPrompts,
   datasetOptions,
-  onNavigateToDataTab
+  onNavigateToDataTab,
+  selectedModel = 'gpt-4o-mini',
+  onModelChange,
+  modelOptions = []
 }) => {
   const hasDataLoaded = selectedDataset || uploadedData;
 
@@ -64,6 +71,25 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
               </Button>
             )}
           </div>
+          
+          {/* Add AI Model Selector if modelOptions are provided */}
+          {modelOptions.length > 0 && onModelChange && (
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1 dark:text-gray-300">Select AI Model for Code Generation</label>
+              <Select defaultValue={selectedModel} onValueChange={onModelChange}>
+                <SelectTrigger className="w-full dark:bg-gray-700">
+                  <SelectValue placeholder="Select AI Model" />
+                </SelectTrigger>
+                <SelectContent>
+                  {modelOptions.map((model) => (
+                    <SelectItem key={model.value} value={model.value}>
+                      {model.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           
           <PromptInput
             placeholder="Ask a question about your data or request a specific analysis..."
