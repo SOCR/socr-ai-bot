@@ -122,7 +122,35 @@ export async function executeRCode(
       console.log('Checking and installing required packages:', requiredPackages);
       
       // Pre-install packages that are commonly needed
-      const commonPackages = new Set([...requiredPackages, 'ggplot2', 'dplyr', 'base64enc']);
+      const commonPackages = new Set([
+        ...requiredPackages, 
+        'ggplot2', 
+        'dplyr', 
+        'base64enc',
+        'knitr'      // Add knitr for table formatting
+      ]);
+      
+      // Install knitr first explicitly (needed for markdown tables)
+      try {
+        const knitrInstall = await webR.evalR(`
+          if (!requireNamespace("knitr", quietly = TRUE)) {
+            message("Pre-installing knitr package...")
+            install.packages("knitr", repos = "https://cloud.r-project.org/")
+            if (requireNamespace("knitr", quietly = TRUE)) {
+              "Successfully installed knitr"
+            } else {
+              "Failed to install knitr - using alternative methods for tables"
+            }
+          } else {
+            "knitr package already installed"
+          }
+        `);
+        const knitrResult = await knitrInstall.toString();
+        console.log(knitrResult);
+        webR.destroy(knitrInstall);
+      } catch (err) {
+        console.warn("Error installing knitr package:", err);
+      }
       
       // First ensure base64enc is installed for plot encoding
       try {
@@ -196,6 +224,27 @@ export async function executeRCode(
         # Load the specified dataset
         suppressMessages(data(list = "${datasetName}", envir = e))
         df <- get("${datasetName}", envir = e)
+        
+        # Ensure df is a data frame
+        if (!is.data.frame(df)) {
+          if (is.vector(df) || is.factor(df) || is.matrix(df) || is.table(df)) {
+            # For vectors, create a single-column data frame
+            if (is.vector(df) && !is.list(df)) {
+              df <- data.frame(value = df)
+            } else if (is.factor(df)) {
+              df <- data.frame(value = as.character(df))
+            } else {
+              # For matrices and tables
+              df <- as.data.frame(df)
+            }
+          } else if (is.ts(df)) {
+            # For time series
+            df <- data.frame(time = time(df), value = as.numeric(df))
+          } else if (is.list(df) && !is.data.frame(df)) {
+            # For lists that aren't data frames
+            df <- as.data.frame(df, stringsAsFactors = FALSE)
+          }
+        }
         `;
       } 
       // If uploaded data is provided, use it
@@ -243,31 +292,44 @@ export async function executeRCode(
         ${requiredPackages.map(pkg => `suppressMessages(require(${pkg}, quietly = TRUE))`).join('\n        ')}
         
         # Capture output
-        output <- capture.output({
-          # Execute the user code in the environment
-          tryCatch({
+        output <- tryCatch({
+          capture.output({
+            # Execute the user code in the environment
             eval(parse(text = "${code.replace(/"/g, '\\"').replace(/(\r\n|\n|\r)/gm, "\\n")}"), envir = e)
-          }, error = function(e) {
-            # If we hit a package error, try loading common packages directly
-            message("Error encountered: ", conditionMessage(e))
-            if (grepl("there is no package called", conditionMessage(e))) {
-              pkg_name <- gsub(".*there is no package called ['\\"]([^'\\"]+)['\\"].*", "\\\\1", conditionMessage(e))
-              message("Attempting to install missing package: ", pkg_name)
-              tryCatch({
-                webr::install(pkg_name, repos = "https://repo.r-wasm.org/", quiet = TRUE)
-                if (requireNamespace(pkg_name, quietly = TRUE)) {
-                  library(pkg_name, character.only = TRUE)
-                  message("Successfully installed and loaded ", pkg_name)
-                  eval(parse(text = "${code.replace(/"/g, '\\"').replace(/(\r\n|\n|\r)/gm, "\\n")}"), envir = e)
-                }
-              }, error = function(e2) {
-                message("Failed to recover: ", conditionMessage(e2))
-                stop(conditionMessage(e))
-              })
-            } else {
-              stop(conditionMessage(e))
-            }
           })
+        }, error = function(e) {
+          # Use a simple string-based approach to error handling
+          err_message <- paste("Error:", as.character(e))
+          
+          # Check for missing package
+          if (grepl("there is no package called", err_message)) {
+            # Extract package name with basic string operations
+            pkg_name <- sub(".*there is no package called ['\\"]([^'\\"]+)['\\"].*", "\\\\1", err_message)
+            
+            message("Attempting to install missing package: ", pkg_name)
+            install_result <- try({
+              webr::install(pkg_name, repos = "https://repo.r-wasm.org/", quiet = TRUE)
+              if (requireNamespace(pkg_name, quietly = TRUE)) {
+                library(pkg_name, character.only = TRUE)
+                message("Successfully installed and loaded ", pkg_name)
+                # Re-run the code after installing the package
+                capture.output({
+                  eval(parse(text = "${code.replace(/"/g, '\\"').replace(/(\r\n|\n|\r)/gm, "\\n")}"), envir = e)
+                })
+              } else {
+                message("Failed to install package: ", pkg_name)
+                c(paste("Error: Failed to install required package:", pkg_name))
+              }
+            }, silent = TRUE)
+            
+            if (inherits(install_result, "try-error")) {
+              c(paste("Error:", err_message))
+            } else {
+              install_result
+            }
+          } else {
+            c(paste("Error:", err_message))
+          }
         })
         
         # Finalize plot if one was created

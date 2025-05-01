@@ -101,6 +101,11 @@ const BasicTab: React.FC<BasicTabProps> = ({
     const datasetName = selectedDataset || (uploadedData?.name || "unknown");
 
     try {
+      // Check if the prompt is about summary statistics
+      const isSummaryRequest = inputPrompt.toLowerCase().includes('summary statistics') || 
+                              inputPrompt.toLowerCase().includes('summarize') ||
+                              inputPrompt.toLowerCase().includes('summary of');
+      
       // Create detailed system prompt with dataset information
       let systemPrompt = `You are an expert R programmer for the SOCR (Statistical Online Computational Resource) AI Bot. 
 Generate clean, well-commented R code to analyze the dataset according to the user's request.
@@ -108,15 +113,29 @@ ${datasetSummary ? `\nHere's information about the dataset structure:\n${dataset
 ${datasetRows && datasetRows.length > 0 ? `\nHere's a preview of the first few rows of data (up to 5 shown here):
 ${JSON.stringify(datasetRows.slice(0, 5), null, 2)}` : ""}
 
+${isSummaryRequest ? `
+For summary statistics requests:
+1. Use base R functions like summary(), mean(), median(), sd(), etc. for statistics (DO NOT use the psych package)
+2. Format the output as markdown text for better readability
+3. Use knitr::kable() for creating tables (install.packages("knitr") if needed)
+4. Include both numerical summaries and textual interpretation
+5. DO NOT generate plots for summary statistics
+6. Example approach:
+   - Use summary(df) for quick overview
+   - Use sapply(df, class) to show data types
+   - For numerical columns, show mean, median, sd, min, max
+   - For categorical columns, show frequency tables
+   - Wrap table outputs with knitr::kable() to get markdown formatting
+` : `
 Important guidelines:
 1. Always include library imports at the top of your code
 2. Assume the data is already loaded into a variable called 'df'
 3. Include appropriate data cleaning and validation steps
 4. Generate well-commented, concise, readable R code
 5. For visualizations, use ggplot2 with appropriate styling and labels
-6. Output ONLY the R code, without explanations before or after
+`}
 
-DO NOT include any markdown formatting or backticks. Output pure R code only.`;
+DO NOT include any backticks in your output. Output pure R code only.`;
 
       // Prepare messages for the LLM API
       const userMessage: ChatMessage = {
