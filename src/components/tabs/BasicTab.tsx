@@ -131,12 +131,15 @@ DO NOT include any markdown formatting or backticks. Output pure R code only.`;
       let generatedCode: string;
       
       // Call the appropriate API based on the model name
+      // Get the user's temperature setting from the API service
+      const temperature = apiService.getTemperature();
+      
       if (selectedModel.startsWith("gpt") || !selectedModel.startsWith("gemini")) {
         // Default to OpenAI if not specified or starts with "gpt"
-        generatedCode = await openaiApiClient.sendMessage(messagesForApi, selectedModel || "gpt-4o-mini");
+        generatedCode = await openaiApiClient.sendMessage(messagesForApi, selectedModel || "gpt-4o-mini", temperature);
       } else {
         // Use Google's Gemini API
-        generatedCode = await googleApiClient.sendMessage(messagesForApi, selectedModel);
+        generatedCode = await googleApiClient.sendMessage(messagesForApi, selectedModel, temperature);
       }
 
       // Show a notification that we're executing the code (and possibly installing packages)

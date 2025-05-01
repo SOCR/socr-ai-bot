@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react';
 import openaiApiClient from '../../services/openaiApiClient';
 import googleApiClient from '../../services/googleApiClient';
 import { ChatMessage } from '../../services/types'; 
-
+import apiService from '@/lib/apiService';
 
 const AskTab: React.FC = () => {
   const { toast } = useToast();
@@ -49,11 +49,14 @@ const AskTab: React.FC = () => {
   
       const messagesForApi = [systemMessage, userMessage];
       let response: string;
+      
+      // Get the user's temperature setting from the API service
+      const temperature = apiService.getTemperature();
   
       if (selectedModel.startsWith("gpt")) {
-        response = await openaiApiClient.sendMessage(messagesForApi, selectedModel);
+        response = await openaiApiClient.sendMessage(messagesForApi, selectedModel, temperature);
       } else if (selectedModel.startsWith("gemini")) {
-        response = await googleApiClient.sendMessage(messagesForApi, selectedModel);
+        response = await googleApiClient.sendMessage(messagesForApi, selectedModel, temperature);
       } else {
         throw new Error("Unsupported model selected.");
       }

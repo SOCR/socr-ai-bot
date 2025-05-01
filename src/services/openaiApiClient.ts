@@ -10,7 +10,7 @@ const openai = new OpenAI({
 // OpenAI API client
 const openaiApiClient = {
   // Send messages to OpenAI and get a response
-  sendMessage: async (messages: ChatMessage[], model_name: string = 'gpt-3.5-turbo'): Promise<string> => {
+  sendMessage: async (messages: ChatMessage[], model_name: string = 'gpt-3.5-turbo', temperature: number = 0.7): Promise<string> => {
     try {
       // Filter out 'model' role since OpenAI does not support it
       const filteredMessages = messages
@@ -23,7 +23,7 @@ const openaiApiClient = {
       const response = await openai.chat.completions.create({
         model: model_name,
         messages: filteredMessages,
-        temperature: 0.7,
+        temperature: temperature, // Use the provided temperature value
       });
 
       return response.choices[0]?.message?.content || 'No response generated';

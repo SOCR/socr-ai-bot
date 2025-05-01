@@ -10,11 +10,13 @@ interface ApiResponse<T = any> {
 class ApiService {
   private baseUrl: string;
   private apiKey: string | null;
+  private temperature: number;
   
   constructor() {
     // In a real implementation, this would be environment-dependent
     this.baseUrl = 'https://api.example.com/r-server';
     this.apiKey = null;
+    this.temperature = 0.7; // Default temperature
   }
   
   setApiKey(key: string) {
@@ -23,6 +25,14 @@ class ApiService {
   
   getApiKey(): string | null {
     return this.apiKey;
+  }
+  
+  setTemperature(temp: number) {
+    this.temperature = temp;
+  }
+  
+  getTemperature(): number {
+    return this.temperature;
   }
   
   private async fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {

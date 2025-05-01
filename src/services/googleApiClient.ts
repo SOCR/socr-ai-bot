@@ -4,7 +4,7 @@ import { ChatMessage } from './types';
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 const geminiApiClient = {
-  sendMessage: async (messages: ChatMessage[], modelName: string = 'gemini-1.5-pro'): Promise<string> => {
+  sendMessage: async (messages: ChatMessage[], modelName: string = 'gemini-1.5-pro', temperature: number = 0.7): Promise<string> => {
     try {
       const model = genAI.getGenerativeModel({ model: modelName });
 
@@ -21,6 +21,9 @@ const geminiApiClient = {
       // Build the request payload
       const requestPayload: any = {
         contents: formattedMessages,
+        generationConfig: {
+          temperature: temperature
+        }
       };
 
       // Include system instruction if available

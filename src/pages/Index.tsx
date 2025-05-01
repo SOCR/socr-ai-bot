@@ -51,6 +51,7 @@ const Index = () => {
   const handleSaveSettings = (newSettings: typeof settings) => {
     setSettings(newSettings);
     apiService.setApiKey(newSettings.apiKey);
+    apiService.setTemperature(newSettings.temperature);
     
     toast({
       title: "Settings Saved",
