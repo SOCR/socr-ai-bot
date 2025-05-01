@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import { initWebR } from "./lib/webr";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +23,21 @@ const App = () => {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
+  }, []);
+
+  // Initialize WebR on app startup
+  useEffect(() => {
+    const loadWebR = async () => {
+      try {
+        console.log("Initializing WebR...");
+        await initWebR();
+        console.log("WebR initialized successfully");
+      } catch (error) {
+        console.error("Failed to initialize WebR:", error);
+      }
+    };
+    
+    loadWebR();
   }, []);
 
   return (

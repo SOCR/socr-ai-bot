@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { listDatasets, fetchDataset } from '@/lib/webr';
@@ -26,6 +25,28 @@ const BasicTab: React.FC<BasicTabProps> = ({ onOpenSettings }) => {
   const [selectedDataset, setSelectedDataset] = useState<string | null>(null);
   const [uploadedData, setUploadedData] = useState<any | null>(null);
   const [datasetOptions, setDatasetOptions] = useState<{ value: string; label: string }[]>([]);
+  
+  // Fetch available R datasets when component mounts
+  useEffect(() => {
+    const fetchDatasets = async () => {
+      try {
+        setLoading(true);
+        const datasets = await listDatasets();
+        setDatasetOptions(datasets);
+      } catch (error) {
+        console.error('Error fetching datasets:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load R datasets",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDatasets();
+  }, [toast]);
   
   const handleSubmit = async (inputPrompt: string) => {
     if (!inputPrompt.trim()) return;
@@ -98,22 +119,29 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
   const handleDatasetSelect = async (value: string) => {
     setLoading(true);
     try {
-    const rows = await fetchDataset(value);          // grab the whole frame
-    setSelectedDataset(value);
-    setUploadedData(rows);                           // reuse existing prop
-    toast({
-    title: "Dataset Selected",
-    description: `Loaded ${value} (${rows.length} rows)`
-    });
+      const rows = await fetchDataset(value);
+      setSelectedDataset(value);
+      // Create a structured object with metadata to pass to other components
+      const uploadedDataObj = {
+        name: value,
+        data: rows,
+        rows: rows.length,
+        columns: rows.length > 0 ? Object.keys(rows[0] || {}).length : 0
+      };
+      setUploadedData(uploadedDataObj);
+      toast({
+        title: "Dataset Selected",
+        description: `Loaded ${value} (${rows.length} rows)`
+      });
     } catch (err) {
-    console.error(err);
-    toast({
-    title: "Error",
-    description: "Could not load dataset",
-    variant: "destructive"
-    });
+      console.error(err);
+      toast({
+        title: "Error",
+        description: "Could not load dataset",
+        variant: "destructive"
+      });
     } finally {
-    setLoading(false);
+      setLoading(false);
     }
   };
   
@@ -137,6 +165,7 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
             handleSubmit={handleSubmit}
             loading={loading}
             demoPrompts={demoQuestions}
+            datasetOptions={datasetOptions}
           />
           
           <FeedbackForm />

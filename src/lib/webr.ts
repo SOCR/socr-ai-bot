@@ -20,14 +20,20 @@ async function getRandomNumbers() { //for testing only
 export async function listDatasets(): Promise<{ value: string; label: string }[]> {
   await initWebR();           // no-op if already initialised
 
-  /* Ask R for the catalogue and turn it into a neat JS array */
+  /* Ask R for the catalogue and use dataset name for both value and label */
   const robj = await webR.evalR(`
-    # data() returns a matrix; pull name (Item) and human title (Title)
-    df <- as.data.frame(data()$results)[ , c("Item", "Title")]
-    names(df) <- c("value", "label")
+    # Get all datasets from the 'datasets' package
+    all_datasets <- data(package = "datasets")$results[, "Item"]
+    
+    # Create a data frame with the same name for both value and label
+    df <- data.frame(
+      value = all_datasets,
+      label = all_datasets,
+      stringsAsFactors = FALSE
+    )
     df
   `);
-  const result = await robj.toD3();        // [{ value: 'iris', label: 'Edgar Anderson\'s Iris Data' }, ...]
+  const result = await robj.toD3();
   webR.destroy(robj);
   return result;
 }

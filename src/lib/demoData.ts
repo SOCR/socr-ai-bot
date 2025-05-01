@@ -1,12 +1,15 @@
-
 // Demo datasets for the application
 export const demoDatasets = [
-  { value: 'attitude', label: 'Attitude' },
-  { value: 'iris', label: 'Iris' },
+  { value: 'attitude', label: 'Attitude Survey' },
+  { value: 'iris', label: 'Iris Flower Data' },
   { value: 'mtcars', label: 'Motor Trend Cars' },
-  { value: 'diamonds', label: 'Diamonds' },
-  { value: 'gapminder', label: 'Gapminder' },
-  { value: 'USArrests', label: 'USArrests' },
+  { value: 'diamonds', label: 'Diamonds (ggplot2)' },
+  { value: 'ability.cov', label: 'Ability Covariance Matrix' },
+  { value: 'Orange', label: 'Orange Trees Growth' },
+  { value: 'USArrests', label: 'US Arrests by State' },
+  { value: 'airquality', label: 'New York Air Quality' },
+  { value: 'faithful', label: 'Old Faithful Geyser' },
+  { value: 'ChickWeight', label: 'Chick Weights' },
 ];
 
 // Demo prompts for synthetic text generation

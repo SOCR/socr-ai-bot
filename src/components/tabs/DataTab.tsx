@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import DataTable from '../DataTable';
@@ -14,15 +13,15 @@ const DataTab: React.FC<DataTabProps> = ({ selectedDataset, uploadedData }) => {
   const [dataInfo, setDataInfo] = useState({ rows: 0, columns: 0 });
 
   useEffect(() => {
-    if (selectedDataset && sampleData[selectedDataset as keyof typeof sampleData]) {
-      const datasetArray = sampleData[selectedDataset as keyof typeof sampleData];
-      setData(datasetArray);
+    if (selectedDataset && uploadedData) {
+      // We now have the data in uploadedData
+      setData(uploadedData.data || []);
       setDataInfo({
-        rows: datasetArray.length,
-        columns: Object.keys(datasetArray[0] || {}).length
+        rows: uploadedData.rows || 0,
+        columns: uploadedData.columns || 0
       });
     } else if (uploadedData) {
-      // In a real implementation, we would use the actual uploaded data
+      // Directly uploaded data
       setData(uploadedData.data || []);
       setDataInfo({
         rows: uploadedData.rows || 0,

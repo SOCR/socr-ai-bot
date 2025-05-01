@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,7 @@ interface ControlPanelProps {
   handleSubmit: (prompt: string) => Promise<void>;
   loading: boolean;
   demoPrompts: { value: string; label: string }[];
+  datasetOptions: { value: string; label: string }[];
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
@@ -25,7 +25,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onOpenSettings,
   handleSubmit,
   loading,
-  demoPrompts
+  demoPrompts,
+  datasetOptions
 }) => {
   return (
     <Card className="dark:bg-gray-800 dark:border-gray-700">
@@ -41,7 +42,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-2">
-            <DatasetSelector onSelect={handleDatasetSelect} />
+            <DatasetSelector onSelect={handleDatasetSelect} datasetOptions={datasetOptions} />
             
             <p className="text-sm text-center dark:text-gray-400">or</p>
             
