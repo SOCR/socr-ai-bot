@@ -119,19 +119,31 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
   const handleDatasetSelect = async (value: string) => {
     setLoading(true);
     try {
-      const rows = await fetchDataset(value);
+      const result = await fetchDataset(value);
       setSelectedDataset(value);
       // Create a structured object with metadata to pass to other components
       const uploadedDataObj = {
         name: value,
-        data: rows,
-        rows: rows.length,
-        columns: rows.length > 0 ? Object.keys(rows[0] || {}).length : 0
+        data: result.rows,
+        rows: result.rows.length,
+        columns: result.rows.length > 0 ? Object.keys(result.rows[0] || {}).length : 0,
+        summary: result.summary
       };
       setUploadedData(uploadedDataObj);
+      
+      // Always create an initial result with the dataset info
+      setResult({
+        code: `# Dataset: ${value}`,
+        output: `Dataset ${value} loaded with ${result.rows.length} rows and ${
+          result.rows.length > 0 ? Object.keys(result.rows[0] || {}).length : 0
+        } columns.`,
+        datasetSummary: result.summary,
+        datasetRows: result.rows.slice(0, 20) // Show first 20 rows
+      });
+      
       toast({
         title: "Dataset Selected",
-        description: `Loaded ${value} (${rows.length} rows)`
+        description: `Loaded ${value} (${result.rows.length} rows)`
       });
     } catch (err) {
       console.error(err);

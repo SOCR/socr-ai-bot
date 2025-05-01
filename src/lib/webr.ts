@@ -32,7 +32,7 @@ export async function listDatasets(): Promise<{ value: string; label: string }[]
   return result;
 }
 
-export async function fetchDataset(name: string): Promise<Record<string, unknown>[]> {
+export async function fetchDataset(name: string): Promise<{rows: Record<string, unknown>[], summary: string}> {
   await initWebR();
 
   try {
@@ -41,7 +41,7 @@ export async function fetchDataset(name: string): Promise<Record<string, unknown
      *    • new.env()  → scratch space, keeps .GlobalEnv clean
      *    • data(list = "<name>", envir = e) loads the dataset
      *    • obj <- get("<name>", envir = e) fetches it
-     *    • if it isn’t already a data.frame, try to coerce
+     *    • if it isn't already a data.frame, try to coerce
      * --------------------------------------------------------- */
     const r = await webR.evalR(`
       {
@@ -61,17 +61,35 @@ export async function fetchDataset(name: string): Promise<Record<string, unknown
             obj <- as.data.frame(obj)
           }
         }
-        obj
+        
+        # Create a summary output as text
+        summary_output <- capture.output(str(obj))
+        summary_text <- paste(summary_output, collapse="\\n")
+        
+        # Return both the data and its summary
+        list(data = obj, summary = summary_text)
       }
     `);
 
-    const rows = await (r as any).toD3();   // array-of-row objects
+    // Convert the complex R object to a JavaScript object
+    const result = await (r as any).toObject();
+    
+    // Extract and process rows
+    const rows = await result.data.toD3();
+    
+    // Extract summary as a plain string
+    const summary = await result.summary.toString();
+    
+    // Clean up resources
     webR.destroy(r);
+    webR.destroy(result.data);
+    webR.destroy(result.summary);
 
     if (!rows.length) {
       throw new Error(`Dataset '${name}' loaded but contains no rows.`);
     }
-    return rows;
+    
+    return { rows, summary };
   } catch (err: any) {
     throw new Error(`Failed to load dataset '${name}': ${err?.message || err}`);
   }
