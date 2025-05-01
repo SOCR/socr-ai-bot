@@ -42,12 +42,14 @@ const BasicTab: React.FC<BasicTabProps> = ({
   const [datasetOptions, setDatasetOptions] = useState<{ value: string; label: string }[]>([]);
   const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
   
-  // Add model options similar to AskTab
+  // Add model options identical to AskTab
   const modelOptions = [
-    { value: 'gpt-4o-mini', label: 'GPT-4o Mini (Default)' },
-    { value: 'gpt-4o', label: 'GPT-4o (More powerful)' },
+    { value: 'gpt-4o-mini', label: 'Choose Model: (Default GPT-4o-mini)' },
+    { value: 'gpt-4o', label: 'GPT-4o' },
     { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+    { value: 'gemini-2.0-flash-lite', label: 'Gemini 2.0 Flash Lite' },
     { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+    { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
   ];
 
   // Handle model selection change
