@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { ExternalLink } from 'lucide-react';
 import PromptInput from '../PromptInput';
 import DataUpload from '../DataUpload';
 import DatasetSelector from '../DatasetSelector';
@@ -15,6 +16,7 @@ interface ControlPanelProps {
   loading: boolean;
   demoPrompts: { value: string; label: string }[];
   datasetOptions: { value: string; label: string }[];
+  onNavigateToDataTab?: () => void;
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
@@ -26,8 +28,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   handleSubmit,
   loading,
   demoPrompts,
-  datasetOptions
+  datasetOptions,
+  onNavigateToDataTab
 }) => {
+  const hasDataLoaded = selectedDataset || uploadedData;
+
   return (
     <Card className="dark:bg-gray-800 dark:border-gray-700">
       <CardContent className="p-4">
@@ -47,6 +52,17 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             <p className="text-sm text-center dark:text-gray-400">or</p>
             
             <DataUpload onDataUploaded={handleDataUpload} />
+            
+            {hasDataLoaded && onNavigateToDataTab && (
+              <Button 
+                variant="outline" 
+                className="w-full flex items-center justify-center gap-1 mt-2" 
+                onClick={onNavigateToDataTab}
+              >
+                <span>View Full Dataset</span> 
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+            )}
           </div>
           
           <PromptInput

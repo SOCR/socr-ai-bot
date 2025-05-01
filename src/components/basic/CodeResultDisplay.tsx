@@ -1,5 +1,7 @@
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ExternalLink } from 'lucide-react';
 import CodeBlock from '../CodeBlock';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
@@ -13,9 +15,10 @@ interface CodeResultDisplayProps {
     datasetSummary?: string;
     datasetRows?: Record<string, any>[];
   };
+  onNavigateToDataTab?: () => void;
 }
 
-const CodeResultDisplay: React.FC<CodeResultDisplayProps> = ({ result }) => {
+const CodeResultDisplay: React.FC<CodeResultDisplayProps> = ({ result, onNavigateToDataTab }) => {
   return (
     <>
       {result.error ? (
@@ -103,6 +106,19 @@ const CodeResultDisplay: React.FC<CodeResultDisplayProps> = ({ result }) => {
                           </TableBody>
                         </Table>
                       </div>
+                      
+                      <CardFooter className="flex justify-end pt-4 px-0">
+                        {onNavigateToDataTab && (
+                          <Button 
+                            variant="outline" 
+                            className="flex items-center gap-1" 
+                            onClick={onNavigateToDataTab}
+                          >
+                            <span>View Full Dataset</span> 
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </CardFooter>
                     </div>
                   )}
                 </CardContent>

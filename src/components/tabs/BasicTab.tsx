@@ -10,9 +10,19 @@ import ControlPanel from '../basic/ControlPanel';
 
 interface BasicTabProps {
   onOpenSettings: () => void;
+  onDatasetChange?: (dataset: string | null, data: any | null) => void;
+  selectedDataset?: string | null;
+  uploadedData?: any | null;
+  onNavigateToDataTab?: () => void;
 }
 
-const BasicTab: React.FC<BasicTabProps> = ({ onOpenSettings }) => {
+const BasicTab: React.FC<BasicTabProps> = ({ 
+  onOpenSettings, 
+  onDatasetChange,
+  selectedDataset: propSelectedDataset,
+  uploadedData: propUploadedData,
+  onNavigateToDataTab
+}) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [prompt, setPrompt] = useState('');
@@ -21,11 +31,23 @@ const BasicTab: React.FC<BasicTabProps> = ({ onOpenSettings }) => {
     output: string;
     error?: string;
     plot?: string;
+    datasetSummary?: string;
+    datasetRows?: any[];
   }>(null);
-  const [selectedDataset, setSelectedDataset] = useState<string | null>(null);
-  const [uploadedData, setUploadedData] = useState<any | null>(null);
+  const [selectedDataset, setSelectedDataset] = useState<string | null>(propSelectedDataset || null);
+  const [uploadedData, setUploadedData] = useState<any | null>(propUploadedData || null);
   const [datasetOptions, setDatasetOptions] = useState<{ value: string; label: string }[]>([]);
   
+  // Use the props if they're passed in
+  useEffect(() => {
+    if (propSelectedDataset !== undefined) {
+      setSelectedDataset(propSelectedDataset);
+    }
+    if (propUploadedData !== undefined) {
+      setUploadedData(propUploadedData);
+    }
+  }, [propSelectedDataset, propUploadedData]);
+
   // Fetch available R datasets when component mounts
   useEffect(() => {
     const fetchDatasets = async () => {
@@ -106,22 +128,16 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
       setLoading(false);
     }
   };
-  
-  // const handleDatasetSelect = (value: string) => {
-  //   setSelectedDataset(value);
-  //   setUploadedData(null);
-  //   toast({
-  //     title: "Dataset Selected",
-  //     description: `Using the ${value} dataset`
-  //   });
-  // };
 
   const handleDatasetSelect = async (value: string) => {
     setLoading(true);
     try {
       const result = await fetchDataset(value);
+      
+      // Update local state
       setSelectedDataset(value);
-      // Create a structured object with metadata to pass to other components
+      
+      // Create a structured object with metadata
       const uploadedDataObj = {
         name: value,
         data: result.rows,
@@ -129,7 +145,13 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
         columns: result.rows.length > 0 ? Object.keys(result.rows[0] || {}).length : 0,
         summary: result.summary
       };
+      
       setUploadedData(uploadedDataObj);
+      
+      // Propagate to parent component if callback exists
+      if (onDatasetChange) {
+        onDatasetChange(value, uploadedDataObj);
+      }
       
       // Always create an initial result with the dataset info
       setResult({
@@ -157,10 +179,15 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
     }
   };
   
-  
   const handleDataUpload = (data: any) => {
+    // Update local state
     setUploadedData(data);
     setSelectedDataset(null);
+    
+    // Propagate to parent component if callback exists
+    if (onDatasetChange) {
+      onDatasetChange(null, data);
+    }
   };
 
   return (
@@ -178,6 +205,7 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
             loading={loading}
             demoPrompts={demoQuestions}
             datasetOptions={datasetOptions}
+            onNavigateToDataTab={onNavigateToDataTab}
           />
           
           <FeedbackForm />
@@ -188,7 +216,10 @@ ggplot(df, aes(x = factor(cyl), y = mpg)) +
           {!result ? (
             <BasicTabHeader />
           ) : (
-            <CodeResultDisplay result={result} />
+            <CodeResultDisplay 
+              result={result} 
+              onNavigateToDataTab={onNavigateToDataTab}
+            />
           )}
         </div>
       </div>

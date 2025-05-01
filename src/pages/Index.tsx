@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
@@ -23,6 +22,7 @@ const Index = () => {
   const [uploadedData, setUploadedData] = useState<any | null>(null);
   const [settings, setSettings] = useState({
     apiKey: '',
+    geminiApiKey: '',  // Adding geminiApiKey property
     temperature: 0.7,
     retryOnError: true,
   });
@@ -57,11 +57,30 @@ const Index = () => {
       description: "Your settings have been saved successfully."
     });
   };
+
+  // New function to handle dataset selection from BasicTab
+  const handleDatasetChange = (dataset: string | null, data: any | null) => {
+    setSelectedDataset(dataset);
+    setUploadedData(data);
+  };
+
+  // Function to directly navigate to the data tab
+  const navigateToDataTab = () => {
+    setCurrentTab('data');
+  };
   
   const renderCurrentTab = () => {
     switch (currentTab) {
       case 'basic':
-        return <BasicTab onOpenSettings={handleOpenSettings} />;
+        return (
+          <BasicTab 
+            onOpenSettings={handleOpenSettings} 
+            onDatasetChange={handleDatasetChange}
+            selectedDataset={selectedDataset}
+            uploadedData={uploadedData}
+            onNavigateToDataTab={navigateToDataTab}
+          />
+        );
       case 'synth-text':
         return <SynthTextTab />;
       case 'synth-images':
