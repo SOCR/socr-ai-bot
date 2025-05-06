@@ -1,8 +1,8 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import CodeBlock from '../CodeBlock';
+import apiService from '@/lib/apiService';
 
 interface EdaTabProps {
   selectedDataset: string | null;
@@ -11,6 +11,7 @@ interface EdaTabProps {
 
 const EdaTab: React.FC<EdaTabProps> = ({ selectedDataset, uploadedData }) => {
   const [activeTab, setActiveTab] = useState('basic');
+  const [hasAddedCode, setHasAddedCode] = useState(false);
   
   // Example output for demonstration
   const dataSummary = `
@@ -30,6 +31,88 @@ const EdaTab: React.FC<EdaTabProps> = ({ selectedDataset, uploadedData }) => {
  3rd Qu.:70.25   3rd Qu.:84.00   3rd Qu.:46.00  
  Max.   :76.00   Max.   :92.00   Max.   :48.00
 `;
+
+  // Store code in apiService only once when component first mounts
+  useEffect(() => {
+    // Only add code once to prevent duplication
+    if (hasAddedCode) return;
+    
+    // Store basic summary code
+    const summaryCode = 'summary(df)';
+    apiService.addGeneratedCode({
+      title: 'Basic Data Summary',
+      code: summaryCode,
+      output: dataSummary,
+      tabSource: 'EDA Tab'
+    });
+
+    // Store detailed summary code
+    const detailedSummaryCode = 'summarytools::dfSummary(df)';
+    apiService.addGeneratedCode({
+      title: 'Detailed Summary',
+      code: detailedSummaryCode,
+      output: 'Detailed summary output would appear here',
+      tabSource: 'EDA Tab'
+    });
+
+    // Store table one code
+    const tableOneCode = `
+# Create a table one using the tableone package
+library(tableone)
+vars <- names(df) # all variables in the dataset
+tableOne <- CreateTableOne(vars = vars, data = df)
+print(tableOne)
+`;
+    apiService.addGeneratedCode({
+      title: 'Table One',
+      code: tableOneCode,
+      output: 'Table One would be displayed here',
+      tabSource: 'EDA Tab'
+    });
+
+    // Store categorical variables code
+    const categoricalCode = `
+# Analyze categorical variables
+library(DataExplorer)
+plot_bar(df)
+`;
+    apiService.addGeneratedCode({
+      title: 'Categorical Variables',
+      code: categoricalCode,
+      plot: 'https://mdn.github.io/dom-examples/canvas/pixel-manipulation/bicycle.png',
+      tabSource: 'EDA Tab'
+    });
+
+    // Store numerical variables code
+    const numericalCode = `
+# Analyze numerical variables
+library(DataExplorer)
+plot_qq(df)
+plot_histogram(df)
+`;
+    apiService.addGeneratedCode({
+      title: 'Numerical Variables',
+      code: numericalCode,
+      plot: 'https://mdn.github.io/dom-examples/canvas/pixel-manipulation/bicycle.png',
+      tabSource: 'EDA Tab'
+    });
+
+    // Store correlation map code
+    const correlationCode = `
+# Create correlation plot
+library(corrplot)
+correlation_matrix <- cor(df, use = "complete.obs")
+corrplot(correlation_matrix, method = "circle")
+`;
+    apiService.addGeneratedCode({
+      title: 'Correlation Map',
+      code: correlationCode,
+      plot: 'https://mdn.github.io/dom-examples/canvas/pixel-manipulation/bicycle.png',
+      tabSource: 'EDA Tab'
+    });
+
+    setHasAddedCode(true);
+  }, [dataSummary, hasAddedCode]);
 
   return (
     <div className="container mx-auto py-6">

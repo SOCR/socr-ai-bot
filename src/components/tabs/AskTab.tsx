@@ -68,6 +68,35 @@ const AskTab: React.FC = () => {
   
       setHistory((prev) => [...prev, userMessage, assistantMessage]);
       setResult(`SOCR AI-Bot: "${assistantMessage.content}"`);
+
+      // Store the user's question and AI's response in apiService for reporting
+      apiService.addGeneratedCode({
+        title: `Q: ${prompt.length > 50 ? prompt.substring(0, 50) + '...' : prompt}`,
+        code: `
+# User Question: 
+# ${prompt.split('\n').join('\n# ')}
+
+# AI Response (${selectedModel}):
+${response.split('\n').join('\n# ')}
+`,
+        output: '',
+        tabSource: 'Ask Tab'
+      });
+      
+      // Check if the response contains R code and extract it
+      const rCodeBlocks = extractRCodeBlocks(response);
+      
+      // If R code blocks were found, also add them separately
+      if (rCodeBlocks.length > 0) {
+        rCodeBlocks.forEach((block, index) => {
+          apiService.addGeneratedCode({
+            title: `R Code ${index + 1} from "${prompt.length > 30 ? prompt.substring(0, 30) + '...' : prompt}"`,
+            code: block,
+            output: '',
+            tabSource: 'Ask Tab (R Code)'
+          });
+        });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -77,6 +106,21 @@ const AskTab: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Function to extract R code blocks from a response
+  const extractRCodeBlocks = (response: string): string[] => {
+    const codeBlockRegex = /```(?:r|R)?\s*([\s\S]*?)```/g;
+    const matches = response.matchAll(codeBlockRegex);
+    const codeBlocks: string[] = [];
+    
+    for (const match of matches) {
+      if (match[1] && match[1].trim()) {
+        codeBlocks.push(match[1].trim());
+      }
+    }
+    
+    return codeBlocks;
   };
 
   return (
