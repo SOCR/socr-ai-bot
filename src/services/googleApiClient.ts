@@ -1,11 +1,23 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ChatMessage } from './types';
+import { apiKeyStorage } from '@/lib/utils';
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+// Create a function to get a fresh instance of the Gemini client with the current API key
+const createGeminiClient = () => {
+  const apiKey = apiKeyStorage.getGeminiApiKey();
+  return new GoogleGenerativeAI(apiKey || 'dummy-key'); // Will fail if user hasn't set a key
+};
 
 const geminiApiClient = {
   sendMessage: async (messages: ChatMessage[], modelName: string = 'gemini-1.5-pro', temperature: number = 0.7): Promise<string> => {
     try {
+      const apiKey = apiKeyStorage.getGeminiApiKey();
+      
+      if (!apiKey) {
+        throw new Error('Gemini API key not provided. Please add your API key in Settings.');
+      }
+      
+      const genAI = createGeminiClient();
       const model = genAI.getGenerativeModel({ model: modelName });
 
       // Extract system instruction if present
@@ -38,7 +50,8 @@ const geminiApiClient = {
       return result.response.text();
     } catch (error) {
       console.error('Error calling Gemini API:', error);
-      throw new Error('Failed to get response from Gemini service');
+      throw new Error('Failed to get response from Gemini service: ' + 
+        (error instanceof Error ? error.message : 'Unknown error'));
     }
   }
 };

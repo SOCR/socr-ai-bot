@@ -10,6 +10,7 @@ import ControlPanel from '../basic/ControlPanel';
 import openaiApiClient from '../../services/openaiApiClient';
 import googleApiClient from '../../services/googleApiClient';
 import { ChatMessage } from '../../services/types';
+import { apiKeyStorage } from '@/lib/utils';
 
 interface BasicTabProps {
   onOpenSettings: () => void;
@@ -91,6 +92,25 @@ const BasicTab: React.FC<BasicTabProps> = ({
   
   const handleSubmit = async (inputPrompt: string) => {
     if (!inputPrompt.trim()) return;
+    
+    // Check if user has the appropriate API key for the selected model
+    if (selectedModel.startsWith("gpt") && !apiKeyStorage.hasOpenAIApiKey()) {
+      toast({
+        title: "API Key Required",
+        description: "Please add your OpenAI API key in Settings to use GPT models.",
+        variant: "destructive"
+      });
+      onOpenSettings(); // Open settings dialog
+      return;
+    } else if (selectedModel.startsWith("gemini") && !apiKeyStorage.hasGeminiApiKey()) {
+      toast({
+        title: "API Key Required",
+        description: "Please add your Gemini API key in Settings to use Gemini models.",
+        variant: "destructive"
+      });
+      onOpenSettings(); // Open settings dialog
+      return;
+    }
     
     setPrompt(inputPrompt);
     setLoading(true);

@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { apiKeyStorage } from '@/lib/utils';
+import apiService from '@/lib/apiService';
 
 interface Settings {
   apiKey: string;         // OpenAI
-  geminiApiKey: string;   // ✅ New
+  geminiApiKey: string;   // Gemini
   temperature: number;
   retryOnError: boolean;
 }
@@ -16,23 +18,49 @@ interface Settings {
 interface SettingsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  settings: Settings;
   onSave: (settings: Settings) => void;
 }
 
 const SettingsDialog: React.FC<SettingsDialogProps> = ({
   open,
   onOpenChange,
-  settings,
   onSave,
 }) => {
-  const [localSettings, setLocalSettings] = useState(settings);
+  // Load initial settings from storage
+  const [localSettings, setLocalSettings] = useState<Settings>({
+    apiKey: apiKeyStorage.getOpenAIApiKey() || '',
+    geminiApiKey: apiKeyStorage.getGeminiApiKey() || '',
+    temperature: apiKeyStorage.getTemperature(),
+    retryOnError: apiKeyStorage.getRetryOnError(),
+  });
+
+  // Update local settings when dialog opens
+  useEffect(() => {
+    if (open) {
+      setLocalSettings({
+        apiKey: apiKeyStorage.getOpenAIApiKey() || '',
+        geminiApiKey: apiKeyStorage.getGeminiApiKey() || '',
+        temperature: apiKeyStorage.getTemperature(),
+        retryOnError: apiKeyStorage.getRetryOnError(),
+      });
+    }
+  }, [open]);
 
   const handleSliderChange = (value: number[]) => {
     setLocalSettings({ ...localSettings, temperature: value[0] });
   };
 
   const handleSave = () => {
+    // Save to localStorage
+    apiKeyStorage.setOpenAIApiKey(localSettings.apiKey);
+    apiKeyStorage.setGeminiApiKey(localSettings.geminiApiKey);
+    apiKeyStorage.setTemperature(localSettings.temperature);
+    apiKeyStorage.setRetryOnError(localSettings.retryOnError);
+    
+    // Update API service with new temperature
+    apiService.setTemperature(localSettings.temperature);
+    
+    // Notify parent component
     onSave(localSettings);
     onOpenChange(false);
   };

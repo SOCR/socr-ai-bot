@@ -1,5 +1,6 @@
 // Service for making API calls to the backend R server
 import { executeRCode as webRExecuteCode } from './webr';
+import { apiKeyStorage } from './utils';
 
 interface ApiResponse<T = any> {
   success: boolean;
@@ -9,36 +10,32 @@ interface ApiResponse<T = any> {
 
 class ApiService {
   private baseUrl: string;
-  private apiKey: string | null;
-  private temperature: number;
   
   constructor() {
     // In a real implementation, this would be environment-dependent
     this.baseUrl = 'https://api.example.com/r-server';
-    this.apiKey = null;
-    this.temperature = 0.7; // Default temperature
   }
   
   setApiKey(key: string) {
-    this.apiKey = key;
+    apiKeyStorage.setOpenAIApiKey(key);
   }
   
   getApiKey(): string | null {
-    return this.apiKey;
+    return apiKeyStorage.getOpenAIApiKey();
   }
   
   setTemperature(temp: number) {
-    this.temperature = temp;
+    apiKeyStorage.setTemperature(temp);
   }
   
   getTemperature(): number {
-    return this.temperature;
+    return apiKeyStorage.getTemperature();
   }
   
   private async fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
     const headers = {
       'Content-Type': 'application/json',
-      ...(this.apiKey ? { 'Authorization': `Bearer ${this.apiKey}` } : {}),
+      ...(this.getApiKey() ? { 'Authorization': `Bearer ${this.getApiKey()}` } : {}),
       ...(options.headers || {})
     };
     
@@ -92,10 +89,11 @@ class ApiService {
   }
   
   async generateSyntheticText(prompt: string): Promise<ApiResponse<string>> {
-    if (!this.apiKey) {
+    const apiKey = this.getApiKey();
+    if (!apiKey) {
       return {
         success: false,
-        error: 'API key not set'
+        error: 'API key not set. Please add your API key in Settings.'
       };
     }
     
@@ -118,10 +116,11 @@ class ApiService {
   }
   
   async generateSyntheticImage(prompt: string): Promise<ApiResponse<string>> {
-    if (!this.apiKey) {
+    const apiKey = this.getApiKey();
+    if (!apiKey) {
       return {
         success: false,
-        error: 'API key not set'
+        error: 'API key not set. Please add your API key in Settings.'
       };
     }
     
