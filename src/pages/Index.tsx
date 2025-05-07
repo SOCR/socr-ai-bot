@@ -29,7 +29,7 @@ const Index = () => {
   const [showTutorialFirstVisit, setShowTutorialFirstVisit] = useState(false);
   
   // App version
-  const appVersion = '2.6.2';
+  const appVersion = '3.0';
 
   // Check if this is the user's first visit
   useEffect(() => {
