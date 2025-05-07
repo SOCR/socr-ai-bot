@@ -24,11 +24,9 @@ const SynthImagesTab: React.FC = () => {
   const allSizeOptions = {
     'dall-e-3': [
       { value: '1024x1024', label: '1024x1024 (Default)' },
-      { value: '1024x1792', label: '1024x1792 (Portrait)' },
-      { value: '1792x1024', label: '1792x1024 (Landscape)' },
     ],
     'dall-e-2': [
-      { value: '1024x1024', label: '1024x1024 (Default)' },
+      { value: '1024x1024', label: '1024x1024 (Large)' },
       { value: '512x512', label: '512x512 (Medium)' },
       { value: '256x256', label: '256x256 (Small)' },
     ]
@@ -39,9 +37,9 @@ const SynthImagesTab: React.FC = () => {
     const newSizes = allSizeOptions[selectedModel as keyof typeof allSizeOptions] || allSizeOptions['dall-e-3'];
     setAvailableSizes(newSizes);
     
-    // If current size is not available in the new model, reset to default
+    // If current size is not available in the new model, reset to default for that model
     if (!newSizes.some(size => size.value === selectedSize)) {
-      setSelectedSize('1024x1024');
+      setSelectedSize(selectedModel === 'dall-e-3' ? '1024x1024' : '512x512');
     }
   }, [selectedModel, selectedSize]);
 
