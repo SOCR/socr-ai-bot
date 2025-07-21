@@ -275,6 +275,8 @@ ${chunk.output}
 `).join('\n\n');
   }).join('\n\n')}`}
                     language="markdown"
+                    title="R Markdown Report Preview"
+                    showCopy={true}
                   />
                 </div>
                 

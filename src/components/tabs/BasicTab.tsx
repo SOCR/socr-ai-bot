@@ -133,6 +133,12 @@ ${datasetSummary ? `\nHere's information about the dataset structure:\n${dataset
 ${datasetRows && datasetRows.length > 0 ? `\nHere's a preview of the first few rows of data (up to 5 shown here):
 ${JSON.stringify(datasetRows.slice(0, 5), null, 2)}` : ""}
 
+CRITICAL REQUIREMENTS:
+1. Output ONLY valid R code - NO markdown, NO code blocks, NO explanations
+2. Assume the data is already loaded into a variable called 'df'
+3. Use only valid R variable names and syntax
+4. Include library() calls at the top for any packages needed
+
 ${isSummaryRequest ? `
 For summary statistics requests:
 1. Use base R functions like summary(), mean(), median(), sd(), etc. for statistics (DO NOT use the psych package)
@@ -155,7 +161,7 @@ Important guidelines:
 5. For visualizations, use ggplot2 with appropriate styling and labels
 `}
 
-DO NOT include any backticks in your output. Output pure R code only.`;
+Remember: Output pure R code only, no markdown formatting or code blocks.`;
 
       // Prepare messages for the LLM API
       const userMessage: ChatMessage = {
@@ -182,6 +188,74 @@ DO NOT include any backticks in your output. Output pure R code only.`;
         // Use Google's Gemini API
         generatedCode = await googleApiClient.sendMessage(messagesForApi, selectedModel, temperature);
       }
+
+      // Clean the generated code - remove any markdown formatting
+      generatedCode = generatedCode.replace(/```r\n?/g, '').replace(/```\n?/g, '').trim();
+      
+      // Additional cleaning: remove any remaining backticks
+      generatedCode = generatedCode.replace(/`/g, '');
+      
+      console.log('Generated R code:', generatedCode);
+
+      // Validate the generated code
+      if (!generatedCode || generatedCode.length === 0) {
+        throw new Error('Generated code is empty');
+      }
+
+      // More comprehensive validation for common issues that cause "zero-length variable name" error
+      console.log('Validating generated code...');
+      
+      // Check for empty string assignments
+      if (generatedCode.includes('""')) {
+        console.warn('Generated code contains empty strings, this might cause issues');
+      }
+      
+      // Check for potential variable assignment issues
+      if (generatedCode.match(/\s*=\s*[,\s\n]/)) {
+        console.warn('Generated code might contain empty variable assignments');
+        // Try to clean up empty assignments
+        generatedCode = generatedCode.replace(/\s*=\s*[,\s]*\n/g, '\n');
+      }
+      
+      // Check for empty column names or similar patterns that could cause the error
+      if (generatedCode.match(/["`']\s*["`']/)) {
+        console.warn('Generated code contains empty string literals');
+        // Replace empty string literals with placeholder names
+        generatedCode = generatedCode.replace(/["`']\s*["`']/g, '"placeholder"');
+      }
+      
+      // Check for problematic patterns that often cause this specific error
+      const problematicPatterns = [
+        /names\(\s*\)\s*<-/,  // names() <- something
+        /colnames\(\s*\)\s*<-/, // colnames() <- something  
+        /rownames\(\s*\)\s*<-/, // rownames() <- something
+        /=\s*c\(\s*,/, // = c(, ...)
+        /=\s*$/, // assignment with nothing after =
+      ];
+      
+      problematicPatterns.forEach((pattern, index) => {
+        if (pattern.test(generatedCode)) {
+          console.warn(`Found problematic pattern ${index + 1} in generated code`);
+          switch(index) {
+            case 0:
+            case 1:
+            case 2:
+              // Replace problematic naming patterns
+              generatedCode = generatedCode.replace(pattern, '# Removed problematic naming assignment\n#');
+              break;
+            case 3:
+              // Fix empty vector starts
+              generatedCode = generatedCode.replace(pattern, '= c(');
+              break;
+            case 4:
+              // Fix hanging assignments
+              generatedCode = generatedCode.replace(pattern, '= NULL');
+              break;
+          }
+        }
+      });
+      
+      console.log('Code validation complete');
 
       // Show a notification that we're executing the code (and possibly installing packages)
       toast({
@@ -211,30 +285,40 @@ DO NOT include any backticks in your output. Output pure R code only.`;
         });
       } else {
         // Code execution failed, but we'll still show the generated code
+        let errorMessage = response.error || 'An error occurred when executing the code';
+        
+        // Clean up nested "Error: Error: Error:" messages
+        errorMessage = errorMessage.replace(/^(Error:\s*)+/i, 'Error: ');
+        
         setResult({
           code: generatedCode,
           output: "",
-          error: response.error || 'An error occurred when executing the code',
+          error: errorMessage,
           datasetSummary,
           datasetRows
         });
         toast({
           title: "Execution Error",
-          description: response.error || 'An error occurred when executing the generated code',
+          description: errorMessage,
           variant: "destructive"
         });
       }
     } catch (error) {
       console.error('Error generating or executing code:', error);
+      
+      let errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      // Clean up nested "Error: Error: Error:" messages
+      errorMessage = errorMessage.replace(/^(Error:\s*)+/i, 'Error: ');
+      
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : 'An unknown error occurred',
+        description: errorMessage,
         variant: "destructive"
       });
       setResult({
         code: `# An error occurred while generating R code for: "${inputPrompt}"`,
         output: "",
-        error: error instanceof Error ? error.message : 'An unknown error occurred',
+        error: errorMessage,
         datasetSummary,
         datasetRows
       });

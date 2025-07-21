@@ -211,6 +211,23 @@ export async function executeRCode(
 
     // Prepare a function to load data and execute code
     const loadDataAndExecuteCode = async () => {
+      console.log('Starting code execution with:', {
+        datasetName,
+        uploadedData: uploadedData ? {
+          hasData: !!uploadedData.data,
+          dataLength: uploadedData.data?.length || 0,
+          name: uploadedData.name,
+          dataStructure: uploadedData.data && uploadedData.data.length > 0 ? 
+            Object.keys(uploadedData.data[0]) : 'no data'
+        } : null,
+        codeLength: code.length
+      });
+      
+      // Additional debugging for the uploaded data issue
+      if (uploadedData && uploadedData.data && uploadedData.data.length === 0) {
+        console.warn('UploadedData has empty data array, will use default dataset');
+      }
+      
       // First create a sheltered environment
       let setupCode = `
       {
@@ -220,42 +237,87 @@ export async function executeRCode(
 
       // If a dataset name is provided, load it
       if (datasetName) {
+        // Validate dataset name to prevent code injection
+        const cleanDatasetName = datasetName.replace(/[^a-zA-Z0-9._]/g, '');
+        if (cleanDatasetName !== datasetName) {
+          console.warn(`Dataset name cleaned from "${datasetName}" to "${cleanDatasetName}"`);
+        }
+        
         setupCode += `
         # Load the specified dataset
-        suppressMessages(data(list = "${datasetName}", envir = e))
-        df <- get("${datasetName}", envir = e)
-        
-        # Ensure df is a data frame
-        if (!is.data.frame(df)) {
-          if (is.vector(df) || is.factor(df) || is.matrix(df) || is.table(df)) {
-            # For vectors, create a single-column data frame
-            if (is.vector(df) && !is.list(df)) {
-              df <- data.frame(value = df)
-            } else if (is.factor(df)) {
-              df <- data.frame(value = as.character(df))
-            } else {
-              # For matrices and tables
-              df <- as.data.frame(df)
+        tryCatch({
+          suppressMessages(data(list = "${cleanDatasetName}", envir = e))
+          df <- get("${cleanDatasetName}", envir = e)
+          
+          # Ensure df is a data frame
+          if (!is.data.frame(df)) {
+            if (is.vector(df) || is.factor(df) || is.matrix(df) || is.table(df)) {
+              # For vectors, create a single-column data frame
+              if (is.vector(df) && !is.list(df)) {
+                df <- data.frame(value = df)
+              } else if (is.factor(df)) {
+                df <- data.frame(value = as.character(df))
+              } else {
+                # For matrices and tables
+                df <- as.data.frame(df)
+              }
+            } else if (is.ts(df)) {
+              # For time series
+              df <- data.frame(time = time(df), value = as.numeric(df))
+            } else if (is.list(df) && !is.data.frame(df)) {
+              # For lists that aren't data frames
+              df <- as.data.frame(df, stringsAsFactors = FALSE)
             }
-          } else if (is.ts(df)) {
-            # For time series
-            df <- data.frame(time = time(df), value = as.numeric(df))
-          } else if (is.list(df) && !is.data.frame(df)) {
-            # For lists that aren't data frames
-            df <- as.data.frame(df, stringsAsFactors = FALSE)
           }
-        }
+        }, error = function(e) {
+          # If dataset loading fails, create a simple example
+          warning("Failed to load dataset '${cleanDatasetName}': ", e$message)
+          df <- data.frame(
+            x = 1:10,
+            y = 1:10 + rnorm(10)
+          )
+        })
         `;
       } 
       // If uploaded data is provided, use it
-      else if (uploadedData && uploadedData.data) {
+      else if (uploadedData && uploadedData.data && uploadedData.data.length > 0) {
         // Convert the uploaded data to an R data frame
+        // First, validate and clean column names
+        const validColumnNames = Object.keys(uploadedData.data[0])
+          .map(key => {
+            // Remove any invalid characters and ensure non-empty names
+            let cleanKey = key.toString().trim();
+            if (!cleanKey || cleanKey.length === 0) {
+              cleanKey = 'col_unnamed';
+            }
+            // Replace invalid characters with underscores
+            cleanKey = cleanKey.replace(/[^a-zA-Z0-9_]/g, '_');
+            // Ensure it starts with a letter or underscore
+            if (!/^[a-zA-Z_]/.test(cleanKey)) {
+              cleanKey = '_' + cleanKey;
+            }
+            return cleanKey;
+          })
+          .map((name, index, arr) => {
+            // Handle duplicate names
+            const count = arr.slice(0, index).filter(n => n === name).length;
+            return count > 0 ? `${name}_${count + 1}` : name;
+          });
+
+        const originalKeys = Object.keys(uploadedData.data[0]);
+        
         const tempDataVar = await webR.evalR(`
           temp_df <- data.frame(
-            ${Object.keys(uploadedData.data[0]).map(key => 
-              `${key} = c(${uploadedData.data.map((row: any) => 
-                typeof row[key] === 'string' ? `"${row[key]}"` : row[key]).join(',')})`
-            ).join(',')}
+            ${validColumnNames.map((cleanKey, index) => {
+              const originalKey = originalKeys[index];
+              return `${cleanKey} = c(${uploadedData.data.map((row: any) => {
+                const value = row[originalKey];
+                if (value === null || value === undefined) {
+                  return 'NA';
+                }
+                return typeof value === 'string' ? `"${value.replace(/"/g, '\\"')}"` : value;
+              }).join(',')})`;
+            }).join(',')}
           )
           temp_df
         `);
@@ -268,14 +330,25 @@ export async function executeRCode(
         
         // Clean up the temporary variable
         webR.destroy(tempDataVar);
-      } else {
+      } 
+      // If uploaded data is provided but empty, or if no data is provided
+      else {
+        console.log('No valid data provided, creating default dataset');
         // No data provided, create a simple example data frame
         setupCode += `
         # Create a simple example data frame
-        df <- data.frame(
-          x = 1:10,
-          y = 1:10 + rnorm(10)
-        )
+        tryCatch({
+          df <- data.frame(
+            x = 1:10,
+            y = 1:10 + rnorm(10),
+            stringsAsFactors = FALSE
+          )
+          cat("Created default dataset with columns:", colnames(df), "\\n")
+        }, error = function(e) {
+          cat("Error creating default dataset:", e$message, "\\n")
+          # Fallback - even simpler
+          df <- data.frame(value = 1:10)
+        })
         `;
       }
       
@@ -295,14 +368,20 @@ export async function executeRCode(
         output <- tryCatch({
           capture.output({
             # Execute the user code in the environment
-            eval(parse(text = "${code.replace(/"/g, '\\"').replace(/(\r\n|\n|\r)/gm, "\\n")}"), envir = e)
+            user_code <- "${code.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/(\r\n|\n|\r)/gm, "\\n")}"
+            
+            eval(parse(text = user_code), envir = e)
           })
         }, error = function(e) {
           # Use a simple string-based approach to error handling
           err_message <- paste("Error:", as.character(e))
           
-          # Check for missing package
-          if (grepl("there is no package called", err_message)) {
+          # More specific error handling
+          if (grepl("attempt to use zero-length variable name", err_message)) {
+            err_message <- paste("Error: Invalid column name detected in dataset. Please check that all column names are valid R identifiers.")
+          } else if (grepl("object.*not found", err_message)) {
+            err_message <- paste("Error: Variable or function not found. Please check variable names and ensure required packages are loaded.")
+          } else if (grepl("there is no package called", err_message)) {
             # Extract package name with basic string operations
             pkg_name <- sub(".*there is no package called ['\\"]([^'\\"]+)['\\"].*", "\\\\1", err_message)
             
@@ -314,7 +393,8 @@ export async function executeRCode(
                 message("Successfully installed and loaded ", pkg_name)
                 # Re-run the code after installing the package
                 capture.output({
-                  eval(parse(text = "${code.replace(/"/g, '\\"').replace(/(\r\n|\n|\r)/gm, "\\n")}"), envir = e)
+                  user_code <- "${code.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/(\r\n|\n|\r)/gm, "\\n")}"
+                  eval(parse(text = user_code), envir = e)
                 })
               } else {
                 message("Failed to install package: ", pkg_name)
@@ -355,27 +435,36 @@ export async function executeRCode(
       }`;
       
       // Execute the prepared code
-      const result = await webR.evalR(setupCode);
-      const jsResult = await (result as any).toObject();
-      
-      // Extract text output
-      const output = await jsResult.output.toString();
-      
-      // Extract plot if available
-      let plotDataUrl = undefined;
-      if (jsResult.plot_base64) {
-        const plotBase64 = await jsResult.plot_base64.toString();
-        if (plotBase64 && plotBase64 !== "NULL") {
-          plotDataUrl = `data:image/png;base64,${plotBase64}`;
+      console.log('Executing R setup code...');
+      try {
+        const result = await webR.evalR(setupCode);
+        console.log('R setup completed, extracting results...');
+        
+        const jsResult = await (result as any).toObject();
+        
+        // Extract text output
+        const output = await jsResult.output.toString();
+        console.log('Extracted output successfully');
+        
+        // Extract plot if available
+        let plotDataUrl = undefined;
+        if (jsResult.plot_base64) {
+          const plotBase64 = await jsResult.plot_base64.toString();
+          if (plotBase64 && plotBase64 !== "NULL") {
+            plotDataUrl = `data:image/png;base64,${plotBase64}`;
+          }
         }
+        
+        // Clean up
+        webR.destroy(result);
+        webR.destroy(jsResult.output);
+        webR.destroy(jsResult.plot_base64);
+        
+        return { output, plotDataUrl };
+      } catch (rExecutionError) {
+        console.error('Error in R code execution:', rExecutionError);
+        throw new Error(`R execution failed: ${rExecutionError instanceof Error ? rExecutionError.message : String(rExecutionError)}`);
       }
-      
-      // Clean up
-      webR.destroy(result);
-      webR.destroy(jsResult.output);
-      webR.destroy(jsResult.plot_base64);
-      
-      return { output, plotDataUrl };
     };
 
     // Run the code execution

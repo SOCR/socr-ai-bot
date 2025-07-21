@@ -509,7 +509,12 @@ if (ncol(num_df) > 1) {
                         <Button onClick={() => handleRetry('basic')}>Retry Analysis</Button>
                       </div>
                     ) : (
-                      <CodeBlock code={basicAnalysis.output} language="r" />
+                      <CodeBlock 
+                        code={basicAnalysis.output} 
+                        language="r" 
+                        title="Basic Analysis Results"
+                        showCopy={true}
+                      />
                     )}
                   </CardContent>
                 </Card>
@@ -536,7 +541,12 @@ if (ncol(num_df) > 1) {
                       </div>
                     ) : (
                       <div className="mt-4 border rounded p-4 bg-gray-50">
-                        <CodeBlock code={detailedSummary.output} language="r" />
+                        <CodeBlock 
+                          code={detailedSummary.output} 
+                          language="r" 
+                          title="Detailed Summary Results"
+                          showCopy={true}
+                        />
                       </div>
                     )}
                   </CardContent>
@@ -570,7 +580,12 @@ if (ncol(num_df) > 1) {
                       </div>
                     ) : (
                       <div className="mt-4 border rounded p-4 bg-gray-50">
-                        <CodeBlock code={tableOne.output} language="r" />
+                        <CodeBlock 
+                          code={tableOne.output} 
+                          language="r" 
+                          title="Table One Results"
+                          showCopy={true}
+                        />
                       </div>
                     )}
                   </CardContent>
