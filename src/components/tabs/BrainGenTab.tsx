@@ -3,11 +3,31 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
+import { generateBrainImage } from '@/lib/braingen';
+import {useState} from 'react';
+
+
 
 const BrainGenTab: React.FC = () => {
+  const [model, setModel] = useState('');
+  const [loading, setLoading] = useState(false);
   const handleGoToApp = () => {
     window.open('https://socr.umich.edu/HTML5/BrainGen/', '_blank');
   };
+const handleGenerateBrainImage = async () => {
+  try{
+    setLoading(true);
+
+    const data = await generateBrainImage({model});
+    console.log(data);
+  }
+  catch(error){
+    console.error("Error generating brain image:", error);
+  }
+  finally{
+    setLoading(false);
+  }
+};
 
   return (
     <div className="container mx-auto py-6">
@@ -43,8 +63,14 @@ const BrainGenTab: React.FC = () => {
               </p>
               
               <div className="flex justify-center mt-8">
+                <input
+                  type="text"
+                  placeholder="Model"
+                  value = {model}
+                  onChange = {(e) =>setModel(e.target.value)}
+                />  
                 <Button 
-                  onClick={handleGoToApp} 
+                  onClick={handleGenerateBrainImage} 
                   className="bg-socr-blue hover:bg-socr-darkblue"
                   size="lg"
                 >
