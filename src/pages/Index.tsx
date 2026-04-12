@@ -87,7 +87,7 @@ const Index = () => {
       case 'synth-images':
         return <SynthImagesTab />;
       case 'brain-gen':
-        return <BrainGenTab />;
+        return <BrainGenTab projectId="demo" userId="demo-user" isPlayground={true} />;//fix in the future
       case 'data':
         return <DataTab selectedDataset={selectedDataset} uploadedData={uploadedData} />;
       case 'report':
@@ -126,8 +126,7 @@ const Index = () => {
       
       <SettingsDialog
         open={settingsOpen}
-        onOpenChange={setSettingsOpen}
-        settings={settings}
+        onOpenChange={setSettingsOpen}//fix settings in the future
         onSave={handleSaveSettings}
       />
     </div>

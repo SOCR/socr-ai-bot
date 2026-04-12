@@ -42,8 +42,7 @@ export default function GenerationPageClient({ projectId, userId, isPlayground =
   // Parse image info from generated images
   useEffect(() => {
     const fetchImageDetails = async () => {
-      //console.log('Number of generated images:', generatedImageIds.length)
-      if (!generatedImageIds || generatedImageIds.length === 0) return
+      if (generatedImageIds.length === 0) return
 
       try {
         // For playground mode, generatedImageIds contains direct URLs
@@ -227,10 +226,10 @@ export default function GenerationPageClient({ projectId, userId, isPlayground =
         model_name: selectedModel,
         n_images: numImages,
         params: getModelParams(),
-        is_playground: true //set true for now use isPlayground variable to determine when it is time
+        is_playground: isPlayground
       }
 
-      const response = await fetch('/generate', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -243,8 +242,7 @@ export default function GenerationPageClient({ projectId, userId, isPlayground =
       }
 
       const data = await response.json()
-      console.log('generate response:', data)
-      setGeneratedImageIds(data.image_paths)
+      setGeneratedImageIds(data.image_ids)
       toast({
         title: "Success",
         description: `Generated ${numImages} image set${numImages > 1 ? 's' : ''}`,
