@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
 import { generateBrainImage } from '@/lib/braingen';
 import {useState} from 'react';
+import { CollapsibleContent } from '@radix-ui/react-collapsible';
 
 
 
@@ -13,7 +14,7 @@ const BrainGenTab: React.FC = () => {
   const [project_id, setProjectId] = useState('');
   const [model_name, setModel] = useState('');
   const [n_images, setNImages] = useState(1);
-  const [tumor, setTumor] = useState("With Tumor");
+  const [tumour, setTumour] = useState("With Tumor");
   const [slice_orientation, setSliceOrientation] = useState('Axial');
   const [slice_location, setSliceLocation] = useState('Middle');
   const [loading, setLoading] = useState(false);
@@ -23,26 +24,36 @@ const BrainGenTab: React.FC = () => {
 const handleGenerateBrainImage = async () => {
   try{
     setLoading(true);
-
-    const data = await generateBrainImage({
+ // call the brain image backend with the proper params
+    const img_Ids = await generateBrainImage({//generateBrainImage dretursn data.img_ids
       user_id, 
       project_id, 
       model_name, 
       n_images, 
       params: {
-        tumor, 
+        tumour, 
         slice_orientation, 
-        slice_location}});
-    console.log(data);
+        slice_location},
+      is_playground: true
+      });
+    //console.log("Got it!", img_Ids);
+    console.log(img_Ids);
   }
   catch(error){
     console.error("Error generating brain image:", error);
+    console.log("ERROR in handleGenerateBrainImage:", error);
   }
   finally{
     setLoading(false);
   }
 };
 
+useEffect(() => {
+  
+  const fetchImageDetails = async () => {
+    return;
+  }
+})
   return (
     <div className="container mx-auto py-6">
       <div className="max-w-4xl mx-auto">
@@ -108,8 +119,8 @@ const handleGenerateBrainImage = async () => {
                   <input
                     className="w-full border p-2 rounded"
                     type="text"
-                    value={tumor}
-                    onChange={(e) => setTumor(e.target.value)}
+                    value={tumour}
+                    onChange={(e) => setTumour(e.target.value)}
                   />
                   <input
                     className="w-full border p-2 rounded"

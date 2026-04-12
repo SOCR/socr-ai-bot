@@ -1,22 +1,25 @@
 
 export async function generateBrainImage(payload: any) {
     try{
-        const response = await fetch('https://socr-image-gen-backend.nvtcqyjt0g9ej.us-east-1.cs.amazonlightsail.com/generate',{
+        const response = await fetch('http://localhost:8000/generate',{
+        //const response = await fetch('https://socr-image-gen-backend.nvtcqyjt0g9ej.us-east-1.cs.amazonlightsail.com/generate',{
             method: 'POST',
             headers: {
                 "Content-Type": 'application/json'
             },
             body: JSON.stringify(payload)
         });
-
+        
         if (!response.ok) {
             throw new Error(`Error generating brain image: ${response.statusText}`);
         }
         const data = await response.json();
-        return data.image_ids;
+        return data.image_paths;
     }
     catch(error){
         console.error('Error generating brain image:', error);
+        console.log("ERROR in generateBrainImage:", error);
         return payload;
     }
 }
+
