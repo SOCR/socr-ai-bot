@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
@@ -6,6 +6,8 @@ import PromptInput from '../PromptInput';
 import DataUpload from '../DataUpload';
 import DatasetSelector from '../DatasetSelector';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { apiKeyStorage } from '@/lib/utils';
+import { formatCost, getSessionTotalCost, getSessionTotalTokens, subscribeUsage } from '@/lib/usageTracking';
 
 interface ControlPanelProps {
   selectedDataset: string | null;
@@ -21,6 +23,7 @@ interface ControlPanelProps {
   selectedModel?: string;
   onModelChange?: (value: string) => void;
   modelOptions?: { value: string; label: string }[];
+  lastRequestCost?: { tokens: number; costUsd: number } | null;
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
@@ -36,9 +39,17 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   onNavigateToDataTab,
   selectedModel = 'gpt-4o-mini',
   onModelChange,
-  modelOptions = []
+  modelOptions = [],
+  lastRequestCost = null
 }) => {
   const hasDataLoaded = selectedDataset || uploadedData;
+  const [sessionTotal, setSessionTotal] = useState({ tokens: getSessionTotalTokens(), costUsd: getSessionTotalCost() });
+
+  useEffect(() => {
+    const refresh = () => setSessionTotal({ tokens: getSessionTotalTokens(), costUsd: getSessionTotalCost() });
+    refresh();
+    return subscribeUsage(refresh);
+  }, []);
 
   return (
     <Card className="dark:bg-gray-800 dark:border-gray-700">
@@ -107,10 +118,17 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
             </Button>
           </div>
           
-          <div className="text-sm text-gray-500 mt-2 dark:text-gray-400">
-            <p>API Usage: 0 tokens</p>
-            <p>Temperature: 0.7</p>
-            <p>Auto retry on error: Yes</p>
+          <div className="text-sm text-gray-500 mt-2 dark:text-gray-400 space-y-0.5">
+            {lastRequestCost && (
+              <p>
+                Last request: {lastRequestCost.tokens.toLocaleString()} tokens (~{formatCost(lastRequestCost.costUsd)})
+              </p>
+            )}
+            <p>
+              Session usage: {sessionTotal.tokens.toLocaleString()} tokens (~{formatCost(sessionTotal.costUsd)})
+            </p>
+            <p>Temperature: {apiKeyStorage.getTemperature().toFixed(1)}</p>
+            <p>Auto retry on error: {apiKeyStorage.getRetryOnError() ? 'Yes' : 'No'}</p>
           </div>
         </div>
       </CardContent>

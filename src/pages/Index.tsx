@@ -3,15 +3,12 @@ import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BasicTab from '@/components/tabs/BasicTab';
-import SynthTextTab from '@/components/tabs/SynthTextTab';
-import SynthImagesTab from '@/components/tabs/SynthImagesTab';
+import SynthTab from '@/components/tabs/SynthTab';
 import BrainGenTab from '@/components/tabs/BrainGenTab';
 import DataTab from '@/components/tabs/DataTab';
-import ReportTab from '@/components/tabs/ReportTab';
-import EdaTab from '@/components/tabs/EdaTab';
-import AskTab from '@/components/tabs/AskTab';
 import AboutTab from '@/components/tabs/AboutTab';
 import SettingsDialog from '@/components/SettingsDialog';
+import OnboardingDialog from '@/components/OnboardingDialog';
 import apiService from '@/lib/apiService';
 
 const Index = () => {
@@ -26,16 +23,16 @@ const Index = () => {
     temperature: 0.7,
     retryOnError: true,
   });
-  const [showTutorialFirstVisit, setShowTutorialFirstVisit] = useState(false);
-  
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+
   // App version
   const appVersion = '3.0';
 
-  // Check if this is the user's first visit
+  // Show the onboarding explainer once, on the user's first visit
   useEffect(() => {
     const hasVisitedBefore = localStorage.getItem('socr-first-visit');
     if (!hasVisitedBefore) {
-      setShowTutorialFirstVisit(true);
+      setOnboardingOpen(true);
       localStorage.setItem('socr-first-visit', 'true');
     }
   }, []);
@@ -82,37 +79,18 @@ const Index = () => {
             onNavigateToDataTab={navigateToDataTab}
           />
         );
-      case 'synth-text':
-        return <SynthTextTab />;
-      case 'synth-images':
-        return <SynthImagesTab />;
+      case 'synth':
+        return <SynthTab />;
       case 'brain-gen':
         return <BrainGenTab />;
       case 'data':
         return <DataTab selectedDataset={selectedDataset} uploadedData={uploadedData} />;
-      case 'report':
-        return <ReportTab />;
-      case 'eda':
-        return <EdaTab selectedDataset={selectedDataset} uploadedData={uploadedData} />;
-      case 'ask':
-        return <AskTab />;
       case 'about':
         return <AboutTab version={appVersion} />;
       default:
         return <BasicTab onOpenSettings={handleOpenSettings} />;
     }
   };
-
-  // Display welcome message on first visit
-  useEffect(() => {
-    if (showTutorialFirstVisit) {
-      toast({
-        title: "Welcome to SOCR AI Bot",
-        description: "Welcome! Look for the Help button in the navigation bar to start an interactive tutorial.",
-        duration: 8000,
-      });
-    }
-  }, [showTutorialFirstVisit, toast]);
 
   return (
     <div className="flex flex-col min-h-screen dark:bg-gray-900">
@@ -127,8 +105,13 @@ const Index = () => {
       <SettingsDialog
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
-        settings={settings}
         onSave={handleSaveSettings}
+      />
+
+      <OnboardingDialog
+        open={onboardingOpen}
+        onOpenChange={setOnboardingOpen}
+        onOpenSettings={handleOpenSettings}
       />
     </div>
   );

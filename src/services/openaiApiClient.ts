@@ -2,6 +2,11 @@ import OpenAI from 'openai';
 import { ChatMessage } from './types';
 import { apiKeyStorage } from '@/lib/utils';
 
+export interface ChatCompletionResult {
+  text: string;
+  usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+}
+
 // Initialize OpenAI client with dynamic API key
 const createOpenAIClient = () => {
   const apiKey = apiKeyStorage.getOpenAIApiKey();
@@ -14,16 +19,16 @@ const createOpenAIClient = () => {
 // OpenAI API client
 const openaiApiClient = {
   // Send messages to OpenAI and get a response
-  sendMessage: async (messages: ChatMessage[], model_name: string = 'gpt-3.5-turbo', temperature: number = 0.7): Promise<string> => {
+  sendMessage: async (messages: ChatMessage[], model_name: string = 'gpt-3.5-turbo', temperature: number = 0.7): Promise<ChatCompletionResult> => {
     try {
       const apiKey = apiKeyStorage.getOpenAIApiKey();
-      
+
       if (!apiKey) {
         throw new Error('OpenAI API key not provided. Please add your API key in Settings.');
       }
-      
+
       const openai = createOpenAIClient();
-      
+
       // Filter out 'model' role since OpenAI does not support it
       const filteredMessages = messages
         .filter((msg) => msg.role !== 'model') // 🧠 strip Gemini-specific roles
@@ -38,7 +43,14 @@ const openaiApiClient = {
         temperature: temperature, // Use the provided temperature value
       });
 
-      return response.choices[0]?.message?.content || 'No response generated';
+      return {
+        text: response.choices[0]?.message?.content || 'No response generated',
+        usage: response.usage ? {
+          promptTokens: response.usage.prompt_tokens,
+          completionTokens: response.usage.completion_tokens,
+          totalTokens: response.usage.total_tokens,
+        } : undefined,
+      };
     } catch (error) {
       console.error('Error calling OpenAI API:', error);
       throw new Error('Failed to get response from AI service: ' + 

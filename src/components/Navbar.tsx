@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import ThemeToggle from './ThemeToggle';
 import Tutorial from './Tutorial';
 import { Step } from './Tutorial';
+import UsageIndicator from './UsageIndicator';
 
 interface NavbarProps {
   currentTab: string;
@@ -18,13 +19,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
   
   const tabs = [
     { id: "basic", label: "Basic" },
-    { id: "synth-text", label: "Synth Text" },
-    { id: "synth-images", label: "Synth Images" },
+    { id: "synth", label: "Synth" },
     { id: "brain-gen", label: "Synthetic Brain Data Generator" },
     { id: "data", label: "Data" },
-    { id: "report", label: "Report" },
-    { id: "eda", label: "EDA" },
-    { id: "ask", label: "Ask" },
     { id: "about", label: "About" }
   ];
   
@@ -47,7 +44,14 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
     {
       target: '#basic-tab',
       title: 'Basic Tab Overview',
-      content: 'The Basic tab is your starting point for data analysis. Let\'s explore its features.',
+      content: 'The Basic tab is your starting point for data analysis, organized into four sub-tabs: Generate, EDA, Ask, and Report.',
+      position: 'bottom',
+      tabId: 'basic'
+    },
+    {
+      target: '#generate-subtab',
+      title: 'Generate Sub-tab',
+      content: 'Use the Generate sub-tab to select or upload a dataset and ask AI to write and run R code against it.',
       position: 'bottom',
       tabId: 'basic'
     },
@@ -108,57 +112,66 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
       tabId: 'basic'
     },
     
+    // Synth Tab - Overview
+    {
+      target: '#synth-tab',
+      title: 'Synth Tab Overview',
+      content: 'The Synth tab lets you generate synthetic content with AI. Switch between the Text and Image sub-tabs below.',
+      position: 'bottom',
+      tabId: 'synth'
+    },
+
     // Synth Text Tab
     {
-      target: '#synth-text-tab',
+      target: '#synth-text-subtab',
       title: 'Synthetic Text Generation',
       content: 'Generate AI-written text based on your prompts. Requires an OpenAI API key.',
       position: 'bottom',
-      tabId: 'synth-text'
+      tabId: 'synth'
     },
     {
       target: '.container .card:first-child',
       title: 'Text Generation Prompt',
       content: 'Enter your prompt or choose from example prompts to generate synthetic text content.',
       position: 'top',
-      tabId: 'synth-text'
+      tabId: 'synth'
     },
     {
       target: '.container .card:nth-child(2)',
       title: 'Generated Text Output',
       content: 'View the AI-generated text results from your prompt here.',
       position: 'top',
-      tabId: 'synth-text'
+      tabId: 'synth'
     },
     
     // Synth Images Tab
     {
-      target: '#synth-images-tab',
+      target: '#synth-images-subtab',
       title: 'Synthetic Image Generation',
       content: 'Create AI-generated images from text descriptions. Requires an OpenAI API key.',
       position: 'bottom',
-      tabId: 'synth-images'
+      tabId: 'synth'
     },
     {
       target: '.container .max-w-3xl .card:first-child',
       title: 'Image Generation Interface',
       content: 'Enter text prompts and adjust settings to generate images that match your description.',
       position: 'right',
-      tabId: 'synth-images'
+      tabId: 'synth'
     },
     {
       target: '.container .max-w-3xl [class*="Select"]',
       title: 'Image Settings',
       content: 'Configure image resolution, size, and style preferences for your generated images.',
       position: 'right',
-      tabId: 'synth-images'
+      tabId: 'synth'
     },
     {
       target: '.container .max-w-3xl .grid',
       title: 'Image Gallery',
       content: 'View your generated images. Click on an image to see it in full size or download it.',
       position: 'top',
-      tabId: 'synth-images'
+      tabId: 'synth'
     },
     
     // Brain Gen Tab
@@ -200,122 +213,122 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
       tabId: 'data'
     },
     {
-      target: '.container .card:first-child',
-      title: 'Data Table',
-      content: 'View your selected or uploaded dataset in a sortable, filterable table format.',
-      position: 'right',
+      target: '#data-toolbar',
+      title: 'Dataset Toolbar',
+      content: 'See the dataset name and size, and search across all rows and columns.',
+      position: 'bottom',
       tabId: 'data'
     },
     {
-      target: '[class*="DataTable"]',
+      target: '#data-table-view',
       title: 'Interactive Data Table',
-      content: 'Sort columns, search data, and navigate through pages to explore your dataset in detail.',
+      content: 'Browse your dataset in a sortable, scrollable table. Numeric columns are right-aligned for easy comparison.',
       position: 'top',
       tabId: 'data'
     },
     {
-      target: '[class*="DataTable"] .flex.items-center.justify-between',
+      target: '#data-pagination-controls',
       title: 'Pagination Controls',
-      content: 'Navigate between pages of data and adjust how many rows are displayed at once.',
+      content: 'Navigate between pages of data using these controls.',
       position: 'top',
       tabId: 'data'
     },
     
     // Report Tab
     {
-      target: '#report-tab',
+      target: '#report-subtab',
       title: 'Report Tab',
       content: 'Generate comprehensive reports from your analyses in various formats.',
       position: 'bottom',
-      tabId: 'report'
+      tabId: 'basic'
     },
     {
       target: '.container .max-w-4xl .card:first-child',
       title: 'Report Configuration',
       content: 'Choose report type, content sections, and format options for your generated reports.',
       position: 'top',
-      tabId: 'report'
+      tabId: 'basic'
     },
     {
       target: '.container .max-w-4xl .flex.gap-4',
       title: 'Report Actions',
       content: 'Generate, preview, and download reports in various formats like PDF, HTML, or Word.',
       position: 'top',
-      tabId: 'report'
+      tabId: 'basic'
     },
     
     // EDA Tab
     {
-      target: '#eda-tab',
+      target: '#eda-subtab',
       title: 'Exploratory Data Analysis',
       content: 'Perform Exploratory Data Analysis with visualizations like histograms, scatter plots, and more.',
       position: 'bottom',
-      tabId: 'eda'
+      tabId: 'basic'
     },
     {
       target: '.container .card:first-child',
       title: 'EDA Visualization Tools',
       content: 'Create various visualization types to explore relationships and patterns in your data.',
       position: 'right',
-      tabId: 'eda'
+      tabId: 'basic'
     },
     {
       target: '.container .card:first-child [class*="Select"]',
       title: 'Visualization Type Selection',
       content: 'Choose from different visualization types like histograms, scatter plots, box plots, and more.',
       position: 'top',
-      tabId: 'eda'
+      tabId: 'basic'
     },
     {
       target: '.container .card:first-child .grid',
       title: 'Variable Selection',
       content: 'Select which variables from your dataset to include in your visualizations.',
       position: 'right',
-      tabId: 'eda'
+      tabId: 'basic'
     },
     {
       target: '.container .card:nth-child(2)',
       title: 'Visualization Output',
       content: 'View the generated visualizations and gain insights into your data patterns and distributions.',
       position: 'top',
-      tabId: 'eda'
+      tabId: 'basic'
     },
     
     // Ask Tab
     {
-      target: '#ask-tab',
+      target: '#ask-subtab',
       title: 'Ask AI',
       content: 'Ask questions about statistics, data science, or get help interpreting your results.',
       position: 'bottom', 
-      tabId: 'ask'
+      tabId: 'basic'
     },
     {
       target: '.container .max-w-4xl .card:first-child',
       title: 'AI Question Interface',
       content: 'Select an AI model and ask questions related to statistics, data science, or your analysis results.',
       position: 'top',
-      tabId: 'ask'
+      tabId: 'basic'
     },
     {
       target: '.container .max-w-4xl .card:first-child [class*="Select"]',
       title: 'AI Model Selection',
       content: 'Choose from different AI models, each with varying capabilities and response speeds.',
       position: 'top',
-      tabId: 'ask'
+      tabId: 'basic'
     },
     {
       target: '.container .max-w-4xl .card:first-child textarea',
       title: 'Question Input',
       content: 'Type your statistical or data science question here. Be specific for the best results.',
       position: 'top',
-      tabId: 'ask'
+      tabId: 'basic'
     },
     {
       target: '.container .max-w-4xl .card:nth-child(2)',
       title: 'AI Response',
       content: 'View the AI\'s answer to your question, which may include explanations, formulas, or code snippets.',
       position: 'top',
-      tabId: 'ask'
+      tabId: 'basic'
     },
     
     // About Tab
@@ -406,6 +419,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, onTabChange }) => {
           
           {/* Theme Toggle and Tutorial buttons */}
           <div className="flex items-center space-x-1">
+            <UsageIndicator />
             <span id="theme-toggle">
               <ThemeToggle />
             </span>

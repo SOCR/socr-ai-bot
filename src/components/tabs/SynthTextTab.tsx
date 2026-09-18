@@ -8,12 +8,14 @@ import { Loader2 } from 'lucide-react';
 import openaiApiClient from '../../services/openaiApiClient';
 import geminiApiClient from '../../services/googleApiClient';
 import { ChatMessage } from '../../services/types';
+import { estimateTextCost, formatCost, recordUsage } from '@/lib/usageTracking';
 
 const SynthTextTab: React.FC = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [text, setText] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
+  const [lastRequestCost, setLastRequestCost] = useState<{ tokens: number; costUsd: number } | null>(null);
 
   const modelOptions = [
     { value: 'gpt-4o-mini', label: 'Choose Model: (Default GPT-4o-mini)', provider: 'openai' },
@@ -47,14 +49,25 @@ const SynthTextTab: React.FC = () => {
       const messagesForApi = [systemMessage, userMessage];
       const provider = getModelProvider(selectedModel);
 
-      let response;
-      if (provider === 'openai') {
-        response = await openaiApiClient.sendMessage(messagesForApi, selectedModel);
+      const completion = provider === 'openai'
+        ? await openaiApiClient.sendMessage(messagesForApi, selectedModel)
+        : await geminiApiClient.sendMessage(messagesForApi, selectedModel);
+
+      setText(completion.text);
+
+      if (completion.usage) {
+        const costUsd = estimateTextCost(selectedModel, completion.usage);
+        recordUsage({
+          model: selectedModel,
+          tabSource: 'Synth Text Tab',
+          promptTokens: completion.usage.promptTokens,
+          completionTokens: completion.usage.completionTokens,
+          costUsd,
+        });
+        setLastRequestCost({ tokens: completion.usage.totalTokens, costUsd });
       } else {
-        response = await geminiApiClient.sendMessage(messagesForApi, selectedModel);
+        setLastRequestCost(null);
       }
-      
-      setText(response);
     } catch (error) {
       console.error("Error generating text:", error);
       toast({
@@ -121,6 +134,11 @@ const SynthTextTab: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Generated Text</CardTitle>
+              {lastRequestCost && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {lastRequestCost.tokens.toLocaleString()} tokens (~{formatCost(lastRequestCost.costUsd)})
+                </p>
+              )}
             </CardHeader>
             <CardContent>
               <div className="prose max-w-none dark:prose-invert">
