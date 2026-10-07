@@ -21,10 +21,10 @@ const ReportTab: React.FC = () => {
     // Only load code chunks once to prevent duplication
     if (hasLoadedChunks) return;
     
-    // Get ONLY the code chunks from the Basic Tab
+    // Get the code chunks generated from the Generate, EDA, and Ask sub-tabs
     const allGeneratedCode = apiService.getAllGeneratedCode()
-      .filter(chunk => chunk.tabSource === "Basic Tab");
-    
+      .filter(chunk => ["Basic Tab", "EDA Tab", "Ask Tab", "Ask Tab (R Code)"].includes(chunk.tabSource));
+
     if (allGeneratedCode.length > 0) {
       setCodeChunks(allGeneratedCode);
       // By default, select all code chunks
@@ -34,7 +34,7 @@ const ReportTab: React.FC = () => {
       // If no code has been generated, display a message to the user
       toast({
         title: "No code generated yet",
-        description: "Go to the Basic tab and use OpenAI or Gemini to generate and run R code first.",
+        description: "Use the Generate, EDA, or Ask sub-tabs to generate and run R code first.",
         duration: 5000,
       });
       

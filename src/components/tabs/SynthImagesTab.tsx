@@ -6,6 +6,8 @@ import PromptInput from '../PromptInput';
 import { demoImagePrompts } from '@/lib/demoData';
 import { Loader2 } from 'lucide-react';
 import openaiApiClient from '../../services/openaiApiClient';
+import { apiKeyStorage } from '@/lib/utils';
+import { estimateImageCost, formatCost, recordUsage } from '@/lib/usageTracking';
 
 const SynthImagesTab: React.FC = () => {
   const { toast } = useToast();
@@ -14,6 +16,7 @@ const SynthImagesTab: React.FC = () => {
   const [selectedModel, setSelectedModel] = useState('dall-e-3');
   const [selectedSize, setSelectedSize] = useState('1024x1024');
   const [availableSizes, setAvailableSizes] = useState<Array<{value: string, label: string}>>([]);
+  const [lastRequestCost, setLastRequestCost] = useState<number | null>(null);
 
   const modelOptions = [
     { value: 'dall-e-3', label: 'DALL-E 3 (Default)' },
@@ -44,10 +47,10 @@ const SynthImagesTab: React.FC = () => {
   }, [selectedModel, selectedSize]);
 
   const handleSubmit = async (prompt: string) => {
-    if (!import.meta.env.VITE_OPENAI_API_KEY) {
+    if (!apiKeyStorage.hasOpenAIApiKey()) {
       toast({
         title: "API Key Required",
-        description: "Please set your OpenAI API key in the environment variables to use this feature.",
+        description: "Please add your OpenAI API key in Settings to use this feature.",
         variant: "destructive"
       });
       return;
@@ -89,6 +92,15 @@ const SynthImagesTab: React.FC = () => {
       
       if (generatedImageUrl) {
         setImageUrl(generatedImageUrl);
+        const costUsd = estimateImageCost(selectedModel, selectedSize);
+        recordUsage({
+          model: selectedModel,
+          tabSource: 'Synth Images Tab',
+          promptTokens: 0,
+          completionTokens: 0,
+          costUsd,
+        });
+        setLastRequestCost(costUsd);
       } else {
         toast({
           title: "Error",
@@ -180,6 +192,11 @@ const SynthImagesTab: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Generated Image</CardTitle>
+              {lastRequestCost !== null && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Estimated cost: ~{formatCost(lastRequestCost)}
+                </p>
+              )}
             </CardHeader>
             <CardContent className="flex justify-center">
               <img 

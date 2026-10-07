@@ -6,8 +6,9 @@ import PromptInput from '../PromptInput';
 import { Loader2 } from 'lucide-react';
 import openaiApiClient from '../../services/openaiApiClient';
 import googleApiClient from '../../services/googleApiClient';
-import { ChatMessage } from '../../services/types'; 
+import { ChatMessage } from '../../services/types';
 import apiService from '@/lib/apiService';
+import { estimateTextCost, formatCost, recordUsage } from '@/lib/usageTracking';
 
 const AskTab: React.FC = () => {
   const { toast } = useToast();
@@ -15,6 +16,7 @@ const AskTab: React.FC = () => {
   const [result, setResult] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState('gpt-4o-mini');
   const [history, setHistory] = useState<ChatMessage[]>([]);
+  const [lastRequestCost, setLastRequestCost] = useState<{ tokens: number; costUsd: number } | null>(null);
       
   const modelOptions = [
     { value: 'gpt-4o-mini', label: 'Choose Model: (Default GPT-4o-mini)' },
@@ -48,19 +50,32 @@ const AskTab: React.FC = () => {
       };
   
       const messagesForApi = [systemMessage, userMessage];
-      let response: string;
-      
+
       // Get the user's temperature setting from the API service
       const temperature = apiService.getTemperature();
-  
-      if (selectedModel.startsWith("gpt")) {
-        response = await openaiApiClient.sendMessage(messagesForApi, selectedModel, temperature);
-      } else if (selectedModel.startsWith("gemini")) {
-        response = await googleApiClient.sendMessage(messagesForApi, selectedModel, temperature);
+
+      const completion = selectedModel.startsWith("gpt")
+        ? await openaiApiClient.sendMessage(messagesForApi, selectedModel, temperature)
+        : selectedModel.startsWith("gemini")
+        ? await googleApiClient.sendMessage(messagesForApi, selectedModel, temperature)
+        : (() => { throw new Error("Unsupported model selected."); })();
+
+      const response = completion.text;
+
+      if (completion.usage) {
+        const costUsd = estimateTextCost(selectedModel, completion.usage);
+        recordUsage({
+          model: selectedModel,
+          tabSource: 'Ask Tab',
+          promptTokens: completion.usage.promptTokens,
+          completionTokens: completion.usage.completionTokens,
+          costUsd,
+        });
+        setLastRequestCost({ tokens: completion.usage.totalTokens, costUsd });
       } else {
-        throw new Error("Unsupported model selected.");
+        setLastRequestCost(null);
       }
-  
+
       const assistantMessage: ChatMessage = {
         role: 'assistant',
         content: response,
@@ -197,6 +212,11 @@ ${response.split('\n').join('\n# ')}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">AI Response</CardTitle>
+              {lastRequestCost && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Last request: {lastRequestCost.tokens.toLocaleString()} tokens (~{formatCost(lastRequestCost.costUsd)})
+                </p>
+              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">

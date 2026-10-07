@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ChatMessage } from './types';
 import { apiKeyStorage } from '@/lib/utils';
+import type { ChatCompletionResult } from './openaiApiClient';
 
 // Create a function to get a fresh instance of the Gemini client with the current API key
 const createGeminiClient = () => {
@@ -9,7 +10,7 @@ const createGeminiClient = () => {
 };
 
 const geminiApiClient = {
-  sendMessage: async (messages: ChatMessage[], modelName: string = 'gemini-1.5-pro', temperature: number = 0.7): Promise<string> => {
+  sendMessage: async (messages: ChatMessage[], modelName: string = 'gemini-1.5-pro', temperature: number = 0.7): Promise<ChatCompletionResult> => {
     try {
       const apiKey = apiKeyStorage.getGeminiApiKey();
       
@@ -46,8 +47,16 @@ const geminiApiClient = {
       }
 
       const result = await model.generateContent(requestPayload);
+      const usageMetadata = result.response.usageMetadata;
 
-      return result.response.text();
+      return {
+        text: result.response.text(),
+        usage: usageMetadata ? {
+          promptTokens: usageMetadata.promptTokenCount ?? 0,
+          completionTokens: usageMetadata.candidatesTokenCount ?? 0,
+          totalTokens: usageMetadata.totalTokenCount ?? 0,
+        } : undefined,
+      };
     } catch (error) {
       console.error('Error calling Gemini API:', error);
       throw new Error('Failed to get response from Gemini service: ' + 

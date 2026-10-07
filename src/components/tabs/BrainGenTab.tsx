@@ -6,7 +6,7 @@ import { ExternalLink } from 'lucide-react';
 
 const BrainGenTab: React.FC = () => {
   const handleGoToApp = () => {
-    window.open('https://socr.umich.edu/HTML5/BrainGen/', '_blank');
+    window.open('https://rcompute.nursing.umich.edu/SOCR_ImgGenApp/', '_blank');
   };
 
   return (
@@ -20,7 +20,7 @@ const BrainGenTab: React.FC = () => {
           <CardContent className="space-y-8">
             <div className="flex justify-center">
               <img 
-                src="https://mdn.github.io/dom-examples/canvas/pixel-manipulation/bicycle.png" 
+                src="/lovable-uploads/2ee5da75-de6a-4182-be30-93984b17ea5d.png"
                 alt="Brain Generator Preview"
                 className="max-w-full h-auto rounded-lg shadow-lg" 
               />
